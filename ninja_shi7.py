@@ -159,7 +159,8 @@ def main():
 			fo.close()
 
 			trim_string = ''.join(trim_record)
-			fo = open(fastq_path + 'temp/fasta/'+re.sub('fastq','fasta',FASTA[iter]),'w') 
+			#fo = open(fastq_path + 'temp/fasta/'+re.sub('fastq','fasta',FASTA[iter]),'w') 
+			fo = open(os.path.join(fastq_path, 'temp', 'fasta', re.sub('fastq','fasta',FASTA[iter]),'w'))
 			fo.write(trim_string)
 			fo.close()
 			iter+=1
