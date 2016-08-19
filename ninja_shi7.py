@@ -139,31 +139,29 @@ def main():
 	#MAKE_FASTAS
 	if os.path.exists(fastq_path + 'temp/fasta'):
 		shutil.rmtree(fastq_path + 'temp/fasta')
-	os.mkdir(fastq_path + 'temp/fasta')
+	os.mkdir(os.path.join(fastq_path, 'temp', 'fasta'))
 	FASTA = [f for f in os.listdir(fastq_path + '/temp') if f.endswith('.trimmed.fastq')]
 	print(FASTA)
 	if args.make_fastas == 'enabled':
 		iter = 0
 		while iter<len(FASTA):
-			fo = open(fastq_path + '/temp/' + FASTA[iter])
-			record = fo.readlines()
+			with open(os.path.join(fastq_path, 'temp', FASTA[iter])) as fo:
+				record = fo.readlines()
 
-			trim = []
-			i=0
-			while i<len(record):
-				trim.append(record[i])
-				trim.append(record[i+1])
-				i=i+4
+				trim = []
+				i=0
+				while i<len(record):
+					trim.append(record[i])
+					trim.append(record[i+1])
+					i=i+4
 
-			trim_record = [re.sub('^@','>',line) for line in trim]
-			fo.close()
+				trim_record = [re.sub('^@','>',line) for line in trim]
 
 			trim_string = ''.join(trim_record)
 			#fo = open(fastq_path + 'temp/fasta/'+re.sub('fastq','fasta',FASTA[iter]),'w') 
-			fo = open(os.path.join(fastq_path, 'temp', 'fasta', re.sub('fastq','fasta',FASTA[iter]),'w'))
-			#fo = open(os.path.join(fastq_path, 'temp', 'fasta', re.sub('fastq','fasta',FASTA[iter]),'w'))
-			fo.write(trim_string)
-			fo.close()
+			with open(os.path.join(fastq_path, 'temp', 'fasta', re.sub('fastq','fasta',FASTA[iter]),'w')) as fo_1:
+				#fo = open(os.path.join(fastq_path, 'temp', 'fasta', re.sub('fastq','fasta',FASTA[iter]),'w'))
+				fo_1.write(trim_string)
 			iter+=1
 
 	print('MAKE_FASTAS done!')
