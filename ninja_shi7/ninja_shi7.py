@@ -44,8 +44,6 @@ def main():
 	print('script_path:', script_path)
 	fastq_path = args.input
 	print('fastq_path:', fastq_path)
-	#cd_fastq_path = 'cd /Users/KaiweiAng/Documents/Knights_Lab/NINJA-SHI7/sample_fastq; ' #input from user
-	#cd_fastq_path = 'cd ' + fastq_path + '; '
 
 	#FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
 	if os.path.exists(fastq_path) == False:
@@ -60,11 +58,11 @@ def main():
 		print('Error: output file must be a .fna file!')
 		exit()
 
-	#copy the fastq samples to a temp folder in the script directory and use it instead of the original fastq folder
+	#copy the fastq samples to a temp folder in the output directory and use it instead of the original fastq folder
 	if os.path.exists(os.path.join(args.output, 'temp')):
 		shutil.rmtree(os.path.join(args.output, 'temp'))
 		print('Existing temp directory deleted.')
-	#subprocess.call('cp -r ' + fastq_path + ' ' + fastq_path + '/temp', shell=True)
+
 	shutil.copytree(fastq_path, os.path.join(fastq_path, 'temp'))
 
 	#check if MAKE_FASTAS is enabled when QIMME is enabled
@@ -87,7 +85,7 @@ def main():
 	if args.adaptor_type == 'None':
 		for f in R1_fq:
 			#subprocess.call('cp temp/' + f + ' ' + 'temp/' + re.sub('R1','fwdp',f), shell=True)
-			shutil.copy(fastq_path + '/temp/' + f, fastq_path + '/temp/' + re.sub('R1','fwdp',f))
+			shutil.copy(os.path.join(fastq_path, 'temp', f), os.path.join(fastq_path, 'temp', re.sub('R1','fwdp',f)))
 		for f in R2_fq:
 			#subprocess.call('cp temp/' + f + ' ' + 'temp/' + re.sub('R2','revp',f), shell=True)
 			shutil.copy(fastq_path + '/temp/' + f, fastq_path + '/temp/' + re.sub('R2','revp',f))
