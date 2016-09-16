@@ -103,9 +103,8 @@ def split_fwd_rev(paths):
 def axe_adaptors_single_end(input_fastqs, output_path, adapters, threads=1, shell=False):
     output_filenames = []
     for fastq in input_fastqs:
-        print(input_fastqs)
-        output_path = os.path.join(output_path, format_basename(fastq) + '.fastq')
-        trim_cmd = ['trimmomatic', 'SE', fastq, output_path, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '-threads', threads]
+        output_fastq = os.path.join(output_path, format_basename(fastq) + '.fastq')
+        trim_cmd = ['trimmomatic', 'SE', fastq, output_fastq, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '-threads', threads]
         logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_path)
     return output_filenames
