@@ -91,15 +91,15 @@ def main():
     print('output_path:', fna_path)
 
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
-    if os.path.exists(fastq_path) == False:
+    if not os.path.exists(fastq_path):
         print('Error:', fastq_path, 'doesn\'t exist!')
         exit()
 
-    if args.output and os.path.exists(os.path.dirname(args.output)) == False:
+    if args.output and not os.path.exists(os.path.dirname(args.output)):
         print('Error:', os.path.dirname(args.output), 'doesn\'t exist!')
         exit()
 
-    if args.output and args.output.endswith('.fna') == False:
+    if args.output and not args.output.endswith('.fna'):
         print('Error: output file must be a .fna file!')
         exit()
 
@@ -107,60 +107,45 @@ def main():
         shutil.rmtree(os.path.join(os.path.dirname(args.output), 'temp'))
         print('Existing temp directory deleted.')
 
-        # copy the fastq samples to a temp folder in the output directory and use it instead of the original fastq folder
-    # shutil.copytree(fastq_path, os.path.join(os.path.dirname(args.output), 'temp'))
-
-    # check if MAKE_FASTAS is enabled when QIMME is enabled
+    # check if MAKE_FASTAS is enabled when QIIME is enabled
     if args.QIIME == 'enabled' and args.make_fastas == 'disabled':
         print('MAKE_FASTAS needs to be ENABLED in order to run QIIME!')
         exit()
 
-        # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        # AXE_ADAPTORS
+    # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # AXE_ADAPTORS
 
-    FASTQ = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'temp')) if f.endswith('fastq')]
-    print(FASTQ)
-    R1_fqs = [f for f in FASTQ if re.search('R1', f)]
-    R2_fqs = [f for f in FASTQ if re.search('R2', f)]
-    print(R1_fq, '\n')
-    print(R2_fq, '\n')
-    if len(R1_fq) != len(R2_fq) or len(R1_fq) < 1:
+    fastqs = [f for f in os.listdir(fastq_path) if f.endswith('fastq')]
+    print(fastqs)
+    R1_fqs = [f for f in fastqs if re.search('R1', f)]
+    R2_fqs = [f for f in fastqs if re.search('R2', f)]
+    print(R1_fqs, '\n')
+    print(R2_fqs, '\n')
+    if len(R1_fqs) != len(R2_fqs) or len(R1_fqs) < 1:
         print('Error:', fastq_path + ':', 'The input directory must contain at least one pair of R1 & R2 fastq file!')
         exit()
 
     #
     if args.adaptor_type == 'None':
-        fwdp_fnas = R1_fq
+        fwdp_fnas = R1_fqs
     else:
-        for f in R1_fq:
-            subprocess.call(
-                'trimmomatic' + 'PE' + f + ' ' + re.sub('R1', 'R2', f) + ' ' + re.sub('R1', 'fwdp', f) + os.path.join(
-                    ' ', 'dev', 'null ') + re.sub('R1', 'revp', f) + os.path.join(' ', 'dev',
-                                                                                  'null ') + 'ILLUMINACLIP:' + args.adapters + ':2:30:10:2:true -threads ' + args.threads,
-                shell=True)
-        fwdp_fnas = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'temp')) if
-                     re.search('_fwdp.+.fastq', f) != None]
+        for R1, R2 in zip(R1_fqs, R2_fqs):
+            trim_command = ['trimmomatic', 'PE', R1, R2, os.path.join('temp', re.sub('R1', 'fwdp', os.path.basename(R1))), os.path.join('temp', re.sub('R1', 'revp', os.path.basename(R1))), 'ILLUMINACLIP:' + args.adapters + ':2:30:10:2:true', '--threads', args.threads]
+            run_command(trim_command, shell=args.shell)
+        fwdp_fnas = [f for f in os.listdir(os.path.join(os.path.dirname(args.output), 'temp')) if re.search('_fwdp.+.fastq', f)]
 
     print('AXE_ADAPTORS done!\n')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # FLASH
-
-
-    print(FWDP, '\n')
+    print(fwdp_fnas, '\n')
     if args.flash == 'enabled':
         for f in fwdp_fnas:
-            s = 'cd ' + os.path.join(os.path.dirname(fna_path), 'temp') + '; ' + os.path.join(script_path,
-                                                                                              'FLASH-1.2.11',
-                                                                                              'flash ') + f + ' ' + re.sub(
-                "fwdp", "revp", f) + ' -o ' + re.sub('_fwdp.+.fastq', '',
-                                                     f) + ' -M ' + args.max_overlap + ' -m ' + args.min_overlap
-            # s = 'cd ' + os.path.dirname(fna_path) + '/temp; ' + script_path + '/FLASH-1.2.11/flash ' + f + ' ' + re.sub("fwdp","revp",f) + ' -o ' + re.sub('_fwdp.+.fastq','',f) + ' -M ' + args.max_overlap + ' -m ' + args.min_overlap
+            flash_command = ['flash', re.sub("fwdp", "revp", f), '-o ', os.path.join('temp', re.sub('_fwdp.+.fastq', '', os.path.basename(f))), '-M', args.max_overlap, '-m', args.min_overlap]
             if args.allow_outies == 'enabled':
-                s = s + ' -O'
-            subprocess.call(s, shell=True)
-            trimmer_fnas = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'temp')) if
-                            f.endswith('.extendedFrags.fastq')]
+                flash_command.append('-O')
+            subprocess.call(flash_command, shell=True)
+            trimmer_fnas = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'temp')) if f.endswith('.extendedFrags.fastq')]
     else:
         trimmer_fnas = fwdp_fnas
 
