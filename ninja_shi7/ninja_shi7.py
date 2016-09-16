@@ -215,7 +215,7 @@ def main():
 
     [shutil.move(file, args.output) for file in path_fastqs]
     shutil.rmtree(os.path.join(args.output, 'temp'))
-    logging.info('Execution time:', datetime.now() - start_time)
+    logging.info('Execution time: %s' % (datetime.now() - start_time))
 
 
 if __name__ == '__main__':
