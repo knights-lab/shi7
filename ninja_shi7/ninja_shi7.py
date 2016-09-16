@@ -111,7 +111,7 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
         if allow_outies:
             flash_cmd.append('-O')
         logging.info(run_command(flash_cmd, shell=shell))
-    return [f for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
+    return [os.path.join(output_path, f) for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
 
 
 def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
@@ -170,7 +170,7 @@ def main():
 
     if os.path.exists(os.path.join(args.output, 'temp')):
         shutil.rmtree(os.path.join(args.output, 'temp'))
-        print('Existing temp directory deleted.')
+        logging.info('Existing temp directory deleted.')
         os.makedirs(os.path.join(args.output, 'temp'))
     else:
         os.makedirs(os.path.join(args.output, 'temp'))
