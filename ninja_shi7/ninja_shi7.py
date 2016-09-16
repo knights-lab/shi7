@@ -13,36 +13,24 @@ def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for NINJA-SHI7',
                                      usage='python ninja_shi7.py -i <input> -o <output> -t_trim <threads>...')
 
-    parser.add_argument('-adaptor', '--adaptor_type', help='Set the type of the adaptor (default: %(default)s)',
-                        choices=['None', 'Nextera', 'TruSeq3'], default='None')
-    parser.add_argument('-f', '--flash', help='Enable or disable the FLASH (default: %(default)s)',
-                        choices=['enabled', 'disabled'], default='enabled')
-    # path to sequences for trimming
-    parser.add_argument('-trim', '--trimmer', help='Enable or disable the TRIMMER (default: %(default)s)',
-                        choices=['enabled', 'disabled'], default='enabled')
-    parser.add_argument('-fasta', '--make_fastas', help='Enable or disable the MAKE_FASTAS (default: %(default)s)',
-                        choices=['enabled', 'disabled'], default='enabled')
-    parser.add_argument('-qiime', '--QIIME',
-                        help='Enable or disable the QIIME (default: %(default)s) NOTE: MAKE_FASTAS needs to be enabled in order to run QIIME.',
-                        choices=['enabled', 'disabled'], default='enabled')
-    parser.add_argument('-append', '--append_fna', help='Enable or disable the fna append mode (default: %(default)s)',
-                        choices=['enabled', 'disabled'], default='disabled')
-
+    # parser.add_argument('-adaptor', '--adaptor_type', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
+    parser.add_argument('-adaptor', '--adaptor_type', help='Path to the adaptor')
+    parser.add_argument('--no_flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
+    parser.add_argument('--no_trim', help='Disable the TRIMMER (default: Enabled)', dest='trim', action='store_false')
+    parser.add_argument('--no_allow_outies', help='Disable "outie" orientation (default: Enabled)', dest='allow_outies', action='store_false')
+    parser.add_argument('--no_convert_fasta', help='Disable convert FASTQS to FASTA (default: Enabled)', dest='convert_fasta', action='store_false')
+    parser.add_argument('--no_combine_fasta', help='Disable the FASTA append mode (default: Enabled)', dest='combine_fasta', action='store_false')
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory', required=True)
-    parser.add_argument('-o', '--output',
-                        help='Set the directory path of the destination (default: the directory path where fastq files are located)')
+    parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
-                        default=str(multiprocessing.cpu_count()))
-    parser.add_argument('-O', '--allow_outies',
-                        help='Enable "outie" orientation Choose one option: enabled/disabled (deafult: %(default)s)',
-                        default='enabled')
+                        default=multiprocessing.cpu_count())
     parser.add_argument('-m', '--min_overlap',
-                        help='Set the minimum overlap length between two reads (default: %(default)s)', default='20')
+                        help='Set the minimum overlap length between two reads (default: %(default)s)', default=20, type=int)
     parser.add_argument('-M', '--max_overlap',
-                        help='Set the maximum overlap length between two reads (default: %(default)s)', default='700')
-    parser.add_argument('-trim_l', '--trim_length', help='Set the trim length (default: %(default)s)', default='150')
-    parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default='20')
-    # print args.threads_trimmomatic, args.min_overlap, args.max_overlap, args.input, args.allow_outies
+                        help='Set the maximum overlap length between two reads (default: %(default)s)', default=700, type=int)
+    parser.add_argument('-trim_l', '--trim_length', help='Set the trim length (default: %(default)s)', default=150, type=int)
+    parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
+    parser.set_defaults(flash=True, trim=True, allow_outies=True, convert_fasta=True, combine_fasta=True)
     return parser
 
 
@@ -70,192 +58,155 @@ def run_command(cmd, shell=False):
     return output
 
 
+def read_fastq(fh):
+    line = next(fh)
+    while line:
+        title = line[1:].strip()
+        data = ''
+        qualities = ''
+        flag = True
+        line = next(fh)
+        while not line[0] == '@' and line:
+            if line[0] == '+':
+                flag = False
+            elif flag:
+                data += line.strip()
+            else:
+                qualities += line.strip()
+            line = next(fh)
+        yield title, data, qualities
+
+
+def split_fwd_rev(paths):
+    path_R1_fastqs = [f for f in paths if 'R1' in os.path.basename(f)]
+    path_R2_fastqs = [f for f in paths if 'R2' in os.path.basename(f)]
+    if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
+        raise ValueError('Error: The input directory %s must contain at least one pair of R1 & R2 fastq file!' % os.path.dirname(paths[0]))
+    return path_R1_fastqs, path_R2_fastqs
+
+
+def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
+    path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
+    output_filenames = []
+    for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
+        output_path_R1 = os.path.join(output_path, os.path.basename(input_path_R1))
+        output_path_R2 = os.path.join(output_path, os.path.basename(input_path_R2))
+        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, output_path_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '--threads', threads]
+        run_command(trim_cmd, shell=shell)
+        output_filenames.append(output_path_R1)
+        output_filenames.append(output_path_R2)
+    return output_filenames
+
+
+def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
+    path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
+    for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
+        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o ', os.path.join(output_path, re.sub('_R1_+.fastq', '', os.path.basename(input_path_R1))), '-M', max_overlap, '-m', min_overlap, '-t', threads]
+        if allow_outies:
+            flash_cmd.append('-O')
+        run_command(allow_outies, shell=shell)
+    return [f for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
+
+
+def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
+    with open(os.path.join(output_path, 'ninja_shi7_report.log'), 'w') as log:
+        log.writelines()
+        output_filenames = []
+        for path_input_fastq in input_fastqs:
+            path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags.fastq', '.trimmed.fastq', os.path.basename(path_input_fastq)))
+            ninja_shi7_cmd = ['ninja_shi7', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
+            log.write(run_command(ninja_shi7_cmd, shell=shell))
+            output_filenames.append(path_output_fastq)
+    return output_filenames
+
+
+def convert_fastqs(input_fastqs, output_path):
+    output_filenames = []
+    for path_input_fastq in input_fastqs:
+        with open(path_input_fastq) as inf_fastq:
+            gen_fastq = read_fastq(inf_fastq)
+            output_filename = os.path.join(output_path, re.sub('fastq', 'fna', os.path.basename(path_input_fastq)))
+            with open(output_filename, 'w') as outf_fasta:
+                for title, seq, quals in gen_fastq:
+                    outf_fasta.write('>%s\n%s\n' % (title, seq))
+        output_filenames.append(output_filename)
+    return output_filenames
+
+
+def convert_combine_fastqs(input_fastqs, output_path, basenames):
+    output_filenames = []
+    for i, path_input_fastq, basename in enumerate(zip(input_fastqs, basenames)):
+        output_filename = os.path.join(output_path, 'combined_seqs.fna')
+        with open(output_filename, 'w') as outf_fasta:
+            with open(path_input_fastq) as inf_fastq:
+                gen_fastq = read_fastq(inf_fastq)
+                for title, seq, quals in gen_fastq:
+                    outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+        output_filenames.append(output_filename)
+    return output_filenames
+
+
 def main():
     # gcc -m64 -O3 ninja_shi7.c -o ninja_shi7
     # gcc -m64 -O3 -msse4.1 ninja_shi7.c -o ninja_shi7
-    startTime = datetime.now()
+    start_time = datetime.now()
 
     parser = make_arg_parser()
     args = parser.parse_args()
 
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    print('script_path:', script_path)
-    fastq_path = args.input
-    print('fastq_path:', fastq_path)
-
-    if args.output:
-        fna_path = args.output
-    else:
-        fna_path = os.path.join(os.path.dirname(os.path.dirname(fastq_path)), 'seqs.fna')
-        args.output = fna_path
-    print('output_path:', fna_path)
-
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
-    if not os.path.exists(fastq_path):
-        print('Error:', fastq_path, 'doesn\'t exist!')
-        exit()
+    if not os.path.exists(args.input):
+        raise ValueError('Error: Input directory %s doesn\'t exist!' % args.input)
 
-    if args.output and not os.path.exists(os.path.dirname(args.output)):
-        print('Error:', os.path.dirname(args.output), 'doesn\'t exist!')
-        exit()
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
 
-    if args.output and not args.output.endswith('.fna'):
-        print('Error: output file must be a .fna file!')
-        exit()
-
-    if os.path.exists(os.path.join(os.path.dirname(args.output), 'temp')):
-        shutil.rmtree(os.path.join(os.path.dirname(args.output), 'temp'))
+    if os.path.exists(os.path.join(args.output, 'temp')):
+        shutil.rmtree(os.path.join(args.output, 'temp'))
         print('Existing temp directory deleted.')
-
-    # check if MAKE_FASTAS is enabled when QIIME is enabled
-    if args.QIIME == 'enabled' and args.make_fastas == 'disabled':
-        print('MAKE_FASTAS needs to be ENABLED in order to run QIIME!')
-        exit()
+        os.makedirs(os.path.join(args.output, 'temp'))
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # AXE_ADAPTORS
 
-    fastqs = [f for f in os.listdir(fastq_path) if f.endswith('fastq')]
-    print(fastqs)
-    R1_fqs = [f for f in fastqs if re.search('R1', f)]
-    R2_fqs = [f for f in fastqs if re.search('R2', f)]
-    print(R1_fqs, '\n')
-    print(R2_fqs, '\n')
-    if len(R1_fqs) != len(R2_fqs) or len(R1_fqs) < 1:
-        print('Error:', fastq_path + ':', 'The input directory must contain at least one pair of R1 & R2 fastq file!')
-        exit()
+    path_fastqs = [f for f in os.listdir(args.input) if f.endswith('fastq')]
+    print(path_fastqs)
 
-    #
-    if args.adaptor_type == 'None':
-        fwdp_fnas = R1_fqs
-    else:
-        for R1, R2 in zip(R1_fqs, R2_fqs):
-            trim_command = ['trimmomatic', 'PE', R1, R2, os.path.join('temp', re.sub('R1', 'fwdp', os.path.basename(R1))), os.path.join('temp', re.sub('R1', 'revp', os.path.basename(R1))), 'ILLUMINACLIP:' + args.adapters + ':2:30:10:2:true', '--threads', args.threads]
-            run_command(trim_command, shell=args.shell)
-        fwdp_fnas = [f for f in os.listdir(os.path.join(os.path.dirname(args.output), 'temp')) if re.search('_fwdp.+.fastq', f)]
-
-    print('AXE_ADAPTORS done!\n')
+    if args.axe_adaptors:
+        path_fastqs = axe_adaptors(path_fastqs, os.path.join(args.output, 'temp'), args.adaptor_type, threads=args.threads, shell=args.shell)
+        print('AXE_ADAPTORS done!\n')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # FLASH
-    print(fwdp_fnas, '\n')
-    if args.flash == 'enabled':
-        for f in fwdp_fnas:
-            flash_command = ['flash', re.sub('fwdp', 'revp', f), '-o ', os.path.join('temp', re.sub('_fwdp.+.fastq', '', os.path.basename(f))), '-M', args.max_overlap, '-m', args.min_overlap]
-            if args.allow_outies == 'enabled':
-                flash_command.append('-O')
-            subprocess.call(flash_command, shell=True)
-        trimmer_fnas = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'temp')) if f.endswith('.extendedFrags.fastq')]
-    else:
-
-
-
-
-
-
-         
-        trimmer_fnas = fwdp_fnas
-
-    print('FLASH done!\n')
+    if args.flash:
+        path_fastqs = flash(path_fastqs, os.path.join(args.output, 'temp'), args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
+        print('FLASH done!\n')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # CREATE_TRIMMER_GENERAL
-    print(trimmer_fnas, '\n')
-    if args.trimmer == 'enabled':
-        if os.path.exists(os.path.join(fastq_path, 'temp', 'ninja_shi7_report.log')):
-            os.remove(os.path.join(fastq_path, 'temp', 'ninja_shi7_report.log'))
-        for f in trimmer_fnas:
-            s1 = 'cd ' + os.path.join(os.path.dirname(fna_path), 'temp') + '; echo ' + f + ' >> ninja_shi7_report.log'
-            s2 = os.path.join(script_path, 'ninja_shi7_mac ') + f + ' ' + re.sub('.extendedFrags.fastq',
-                                                                                 '.trimmed.fastq',
-                                                                                 f) + ' ' + args.trim_length + ' ' + args.trim_qual + ' ' + args.trim_qual + 'FLOOR 5 ASS_QUALITY 30 >> ninja_shi7_report.log'
-            subprocess.call(s1 + ' && ' + s2, shell=True)
-    else:
-        for f in trimmer_fnas:
-            shutil.copy(os.path.join(os.path.dirname(fna_path), 'temp', f),
-                        os.path.join(os.path.dirname(fna_path), 'temp',
-                                     re.sub('.extendedFrags.fastq', '.trimmed.fastq', f)))
 
-    print('CREATE_TRIMMER_GENERAL done!\n')
+    if args.trimmer:
+        path_fastqs = trimmer(path_fastqs, os.path.join(args.output, 'temp'), args.trim_length, args.trim_qual, threads=args.threads, shell=args.shell)
+        print('CREATE_TRIMMER_GENERAL done!\n')
 
+    # ">[SAMPLENAME]_[INDX starting at 0] HEADER"
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # MAKE_FASTAS
-
-    if os.path.exists(os.path.join(os.path.dirname(fna_path), 'fasta')):
-        shutil.rmtree(os.path.join(os.path.dirname(fna_path), 'fasta'))
-    os.mkdir(os.path.join(os.path.dirname(fna_path), 'fasta'))
-    FASTA = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'temp')) if f.endswith('.trimmed.fastq')]
-    print(FASTA, '\n')
-    if args.make_fastas == 'enabled':
-        iter = 0
-        while iter < len(FASTA):
-            with open(os.path.join(os.path.dirname(fna_path), 'temp', FASTA[iter])) as fo:
-                record = fo.readlines()
-                trim = []
-                i = 0
-                while i < len(record):
-                    trim.append(record[i])
-                    trim.append(record[i + 1])
-                    i = i + 4
-                trim_record = [re.sub('^@', '>', line) for line in trim]
-                trim_string = ''.join(trim_record)
-                # fo = open(fastq_path + 'temp/fasta/'+re.sub('fastq','fasta',FASTA[iter]),'w')
-            with open(os.path.join(os.path.dirname(fna_path), 'fasta', re.sub('fastq', 'fasta', FASTA[iter])),
-                      'w') as fo2:
-                # fo = open(os.path.join(fastq_path, 'temp', 'fasta', re.sub('fastq','fasta',FASTA[iter]),'w'))
-                fo2.write(trim_string)
-            iter += 1
-
-    print('MAKE_FASTAS done!\n')
-
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # QIIME to .fna
-
-    File = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'fasta')) if f.endswith('.fasta')]
-    print(File, '\n')
-
-    if args.QIIME == 'enabled':
-        if args.append_fna == 'enabled' and os.path.exists(fna_path):
-            # open to read the last sample index
-            with open(fna_path) as fo:
-                # with open(fna_path,'a') as fo_app: #open the fna
-                last_sample_name = fo.readlines()[-2]
-                print('last sample name: ', last_sample_name)
-                s = re.split(' ', last_sample_name)
-                s = re.split('_', s[0])
-                last_idx = int(s[1])
-                print('The last index of the existing fna file:', last_idx)
-            sample_idx = last_idx + 1
+    # CONVERT FASTA TO FASTQ
+    if args.convert_fasta:
+        if args.combine_fasta:
+            basenames = ['.'.join(
+                re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(f)))).split('.')[:-1])
+                                for f in path_fastqs]
+            path_fastqs = convert_combine_fastqs(path_fastqs, os.path.join(args.output, 'temp'), basenames=basenames)
+            print('Convert FASTQs to FASTAs done!')
+            print('Combine FASTAs done!')
         else:
-            # fo_app = open(fna_path,'w') #open the fna
-            sample_idx = 0
-            print('idx:', sample_idx)
+            path_fastqs = convert_fastqs(path_fastqs, os.path.join(args.output, 'temp'))
+            print('Convert FASTQs to FASTAs done!')
 
-        iter2 = 0
-        fastq = []
-        while iter2 < len(File):
-            with open(os.path.join(os.path.dirname(fna_path), 'fasta', File[iter2])) as fo_fasta:
-                record = fo_fasta.readlines()
-                record = [re.sub('^>', '', line) for line in record]
-                sample_name = re.sub('.trimmed.fasta', '', File[iter2])
-                sample_name = '>' + re.sub('[-_]', '.', sample_name) + '_'
-                for idx, line in enumerate(record):
-                    if idx % 2 == 0:
-                        line = sample_name + str(sample_idx) + ' ' + line
-                        sample_idx += 1
-                    fastq.append(line)
-            iter2 += 1
-
-        fastq_string = ''.join(fastq)
-        if args.QIIME == 'enabled':
-            with open(fna_path, 'a') as fo_app:
-                fo_app.write(fastq_string)
-        else:
-            with open(fna_path, 'w') as fo_app:
-                fo_app.write(fastq_string)
-
-    print('QIIME done!')
-    print('Execution time:', datetime.now() - startTime)
+    [shutil.move(file, args.output) for file in path_fastqs]
+    shutil.rmtree(os.path.join(args.output, 'temp'))
+    print('Execution time:', datetime.now() - start_time)
 
 
 if __name__ == '__main__':
