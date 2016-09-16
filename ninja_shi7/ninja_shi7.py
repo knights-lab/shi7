@@ -139,16 +139,14 @@ def convert_fastqs(input_fastqs, output_path):
 
 
 def convert_combine_fastqs(input_fastqs, output_path, basenames):
-    output_filenames = []
-    for i, (path_input_fastq, basename) in enumerate(zip(input_fastqs, basenames)):
-        output_filename = os.path.join(output_path, 'combined_seqs.fna')
-        with open(output_filename, 'w') as outf_fasta:
-            with open(path_input_fastq) as inf_fastq:
-                gen_fastq = read_fastq(inf_fastq)
-                for title, seq, quals in gen_fastq:
-                    outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
-        output_filenames.append(output_filename)
-    return output_filenames
+    output_filename = os.path.join(output_path, 'combined_seqs.fna')
+    with open(output_filename, 'w') as outf_fasta:
+        for i, (path_input_fastq, basename) in enumerate(zip(input_fastqs, basenames)):
+                with open(path_input_fastq) as inf_fastq:
+                    gen_fastq = read_fastq(inf_fastq)
+                    for title, seq, quals in gen_fastq:
+                        outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+    return [output_filename]
 
 
 def main():
@@ -213,7 +211,11 @@ def main():
             path_fastqs = convert_fastqs(path_fastqs, os.path.join(args.output, 'temp'))
             logging.info('Convert FASTQs to FASTAs done!')
 
-    [shutil.move(file, args.output) for file in path_fastqs]
+    for file in path_fastqs:
+        dest = os.path.join(args.output, os.path.basename(file))
+        if os.path.exists(dest):
+            os.remove(dest)
+        shutil.move(file, args.output)
     shutil.rmtree(os.path.join(args.output, 'temp'))
     logging.info('Execution time: %s' % (datetime.now() - start_time))
 
