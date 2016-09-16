@@ -159,7 +159,7 @@ def main():
     parser = make_arg_parser()
     args = parser.parse_args()
 
-    logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), mode='w', level=logging.DEBUG)
+    logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), filemode='w', level=logging.DEBUG)
 
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
     if not os.path.exists(args.input):
