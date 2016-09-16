@@ -218,7 +218,7 @@ def main():
         if os.path.exists(dest):
             os.remove(dest)
         shutil.move(file, args.output)
-    shutil.rmtree(os.path.join(args.output, 'temp'))
+    # shutil.rmtree(os.path.join(args.output, 'temp'))
     logging.info('Execution time: %s' % (datetime.now() - start_time))
 
 
