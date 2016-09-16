@@ -141,12 +141,19 @@ def main():
     print(fwdp_fnas, '\n')
     if args.flash == 'enabled':
         for f in fwdp_fnas:
-            flash_command = ['flash', re.sub("fwdp", "revp", f), '-o ', os.path.join('temp', re.sub('_fwdp.+.fastq', '', os.path.basename(f))), '-M', args.max_overlap, '-m', args.min_overlap]
+            flash_command = ['flash', re.sub('fwdp', 'revp', f), '-o ', os.path.join('temp', re.sub('_fwdp.+.fastq', '', os.path.basename(f))), '-M', args.max_overlap, '-m', args.min_overlap]
             if args.allow_outies == 'enabled':
                 flash_command.append('-O')
             subprocess.call(flash_command, shell=True)
-            trimmer_fnas = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'temp')) if f.endswith('.extendedFrags.fastq')]
+        trimmer_fnas = [f for f in os.listdir(os.path.join(os.path.dirname(fna_path), 'temp')) if f.endswith('.extendedFrags.fastq')]
     else:
+
+
+
+
+
+
+         
         trimmer_fnas = fwdp_fnas
 
     print('FLASH done!\n')
