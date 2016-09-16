@@ -81,7 +81,7 @@ def read_fastq(fh):
         qualities = ''
         flag = True
         line = next(fh)
-        while not line[0] == '@' and line:
+        while (not line[0] == '@' and line) or flag:
             if line[0] == '+':
                 flag = False
             elif flag:
