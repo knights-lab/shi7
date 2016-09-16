@@ -28,9 +28,9 @@ def make_arg_parser():
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
                         default=multiprocessing.cpu_count())
     parser.add_argument('-m', '--min_overlap',
-                        help='Set the minimum overlap length between two reads (default: %(default)s)', default=20, type=int)
+                        help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
     parser.add_argument('-M', '--max_overlap',
-                        help='Set the maximum overlap length between two reads (default: %(default)s)', default=700, type=int)
+                        help='Set the maximum overlap length between two reads. If V4 set to 300 (default: %(default)s)', default=700, type=int)
     parser.add_argument('-trim_l', '--trim_length', help='Set the trim length (default: %(default)s)', default=150, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
     parser.set_defaults(flash=True, trim=True, allow_outies=True, convert_fasta=True, combine_fasta=True, shell=False, single_end=False)
