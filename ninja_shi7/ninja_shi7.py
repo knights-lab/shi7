@@ -174,7 +174,7 @@ def main():
     print(path_fastqs)
 
     if args.axe_adaptors:
-        path_fastqs = axe_adaptors(path_fastqs, os.path.join(args.output, 'temp'), args.adaptor_type, threads=args.threads, shell=args.shell)
+        path_fastqs = axe_adaptors(path_fastqs, os.path.join(args.output, 'temp'), args.axe_adaptors, threads=args.threads, shell=args.shell)
         print('AXE_ADAPTORS done!\n')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
