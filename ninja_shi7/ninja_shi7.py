@@ -107,7 +107,7 @@ def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
 def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
-        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o ', os.path.join(output_path, re.sub('_R1_+.fastq', '', os.path.basename(input_path_R1))), '-M', max_overlap, '-m', min_overlap, '-t', threads]
+        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', os.path.join(output_path, re.sub('_R1_+.fastq', '', os.path.basename(input_path_R1))), '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
         logging.info(run_command(flash_cmd, shell=shell))
@@ -159,7 +159,7 @@ def main():
     parser = make_arg_parser()
     args = parser.parse_args()
 
-    logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), filemode='w', level=logging.DEBUG)
+    logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
     if not os.path.exists(args.input):
@@ -179,24 +179,24 @@ def main():
     # AXE_ADAPTORS
 
     path_fastqs = [f for f in os.listdir(args.input) if f.endswith('fastq')]
-    print(path_fastqs)
+    logging.debug(path_fastqs)
 
     if args.axe_adaptors:
         path_fastqs = axe_adaptors(path_fastqs, os.path.join(args.output, 'temp'), args.axe_adaptors, threads=args.threads, shell=args.shell)
-        print('AXE_ADAPTORS done!\n')
+        logging.info('AXE_ADAPTORS done!')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # FLASH
     if args.flash:
         path_fastqs = flash(path_fastqs, os.path.join(args.output, 'temp'), args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
-        print('FLASH done!\n')
+        logging.info('FLASH done!')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # CREATE_TRIMMER_GENERAL
 
     if args.trim:
         path_fastqs = trimmer(path_fastqs, os.path.join(args.output, 'temp'), args.trim_length, args.trim_qual, threads=args.threads, shell=args.shell)
-        print('CREATE_TRIMMER_GENERAL done!\n')
+        logging.info('CREATE_TRIMMER_GENERAL done!')
 
     # ">[SAMPLENAME]_[INDX starting at 0] HEADER"
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -207,15 +207,15 @@ def main():
                 re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(f)))).split('.')[:-1])
                                 for f in path_fastqs]
             path_fastqs = convert_combine_fastqs(path_fastqs, os.path.join(args.output, 'temp'), basenames=basenames)
-            print('Convert FASTQs to FASTAs done!')
-            print('Combine FASTAs done!')
+            logging.info('Convert FASTQs to FASTAs done!')
+            logging.info('Combine FASTAs done!')
         else:
             path_fastqs = convert_fastqs(path_fastqs, os.path.join(args.output, 'temp'))
-            print('Convert FASTQs to FASTAs done!')
+            logging.info('Convert FASTQs to FASTAs done!')
 
     [shutil.move(file, args.output) for file in path_fastqs]
     shutil.rmtree(os.path.join(args.output, 'temp'))
-    print('Execution time:', datetime.now() - start_time)
+    logging.info('Execution time:', datetime.now() - start_time)
 
 
 if __name__ == '__main__':
