@@ -46,6 +46,7 @@ def run_command(cmd, shell=False):
 
     try:
         cmd = [str(i) for i in cmd]
+        print(' '.join(cmd))
         output = subprocess.check_output(
             cmd,
             stderr=subprocess.STDOUT,
