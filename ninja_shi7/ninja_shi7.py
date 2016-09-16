@@ -198,7 +198,7 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # AXE_ADAPTORS
 
-    path_fastqs = [f for f in os.listdir(args.input) if f.endswith('fastq')]
+    path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq')]
     logging.debug(path_fastqs)
 
     if args.axe_adaptors:
