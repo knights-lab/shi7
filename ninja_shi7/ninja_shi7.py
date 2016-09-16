@@ -132,7 +132,13 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
         if allow_outies:
             flash_cmd.append('-O')
         logging.info(run_command(flash_cmd, shell=shell))
-    return [re.sub('.extendedFrags', '', os.path.join(output_path, f)) for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
+    output_filenames = []
+    for f in os.listdir(output_path):
+        if f.endswith('extendedFrags.fastq'):
+            dest = re.sub('.extendedFrags', '', os.path.join(output_path, f))
+            shutil.move(f, dest)
+            output_filenames.append(dest)
+    return output_filenames
 
 
 def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
@@ -151,7 +157,7 @@ def convert_fastqs(input_fastqs, output_path):
     for path_input_fastq in input_fastqs:
         with open(path_input_fastq) as inf_fastq:
             gen_fastq = read_fastq(inf_fastq)
-            output_filename = os.path.join(output_path, re.sub('.trimmed', '', format_basename(path_input_fastq)) + '.fna')
+            output_filename = os.path.join(output_path, format_basename(path_input_fastq) + '.fna')
             with open(output_filename, 'w') as outf_fasta:
                 for title, seq, quals in gen_fastq:
                     outf_fasta.write('>%s\n%s\n' % (title, seq))
