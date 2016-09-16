@@ -15,8 +15,7 @@ def make_arg_parser():
                                      usage='python ninja_shi7.py -i <input> -o <output> -t_trim <threads>...')
 
     # parser.add_argument('-adaptor', '--adaptor_type', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
-    parser.add_argument('--axe_adaptors', help='Path to the adaptor', default=None)
-    # parser.add_argument('--no_axe_adaptors', help='Disable trimmomatic axe adaptors (default: Enabled)', dest='axe_adaptors', action='store_false')
+    parser.add_argument('--axe_adaptors', help='Path to the adaptor file.', default=None)
     parser.add_argument('--no_flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
     parser.add_argument('--no_trim', help='Disable the TRIMMER (default: Enabled)', dest='trim', action='store_false')
     parser.add_argument('--no_allow_outies', help='Disable "outie" orientation (default: Enabled)', dest='allow_outies', action='store_false')
@@ -152,10 +151,10 @@ def convert_fastqs(input_fastqs, output_path):
 def convert_combine_fastqs(input_fastqs, output_path, basenames):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
     with open(output_filename, 'w') as outf_fasta:
-        for i, (path_input_fastq, basename) in enumerate(zip(input_fastqs, basenames)):
+        for path_input_fastq, basename in zip(input_fastqs, basenames):
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
-                    for title, seq, quals in gen_fastq:
+                    for i, (title, seq, quals) in enumerate(gen_fastq):
                         outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
 
@@ -228,7 +227,7 @@ def main():
         if os.path.exists(dest):
             os.remove(dest)
         shutil.move(file, args.output)
-    # shutil.rmtree(os.path.join(args.output, 'temp'))
+    shutil.rmtree(os.path.join(args.output, 'temp'))
     logging.info('Execution time: %s' % (datetime.now() - start_time))
 
 
