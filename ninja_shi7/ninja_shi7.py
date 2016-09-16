@@ -151,7 +151,7 @@ def convert_fastqs(input_fastqs, output_path):
     for path_input_fastq in input_fastqs:
         with open(path_input_fastq) as inf_fastq:
             gen_fastq = read_fastq(inf_fastq)
-            output_filename = os.path.join(output_path, format_basename(path_input_fastq) + '.fna')
+            output_filename = os.path.join(output_path, re.sub('.trimmed', '', format_basename(path_input_fastq)) + '.fna')
             with open(output_filename, 'w') as outf_fasta:
                 for title, seq, quals in gen_fastq:
                     outf_fasta.write('>%s\n%s\n' % (title, seq))
@@ -159,10 +159,11 @@ def convert_fastqs(input_fastqs, output_path):
     return output_filenames
 
 
-def convert_combine_fastqs(input_fastqs, output_path, basenames):
+def convert_combine_fastqs(input_fastqs, output_path):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
     with open(output_filename, 'w') as outf_fasta:
-        for path_input_fastq, basename in zip(input_fastqs, basenames):
+        for path_input_fastq in input_fastqs:
+                basename = re.sub('.trimmed', '', format_basename(path_input_fastq))
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
@@ -231,8 +232,7 @@ def main():
     # CONVERT FASTA TO FASTQ
     if args.convert_fasta:
         if args.combine_fasta:
-            basenames = [format_basename(filename) for filename in path_fastqs]
-            path_fastqs = convert_combine_fastqs(path_fastqs, os.path.join(args.output, 'temp'), basenames=basenames)
+            path_fastqs = convert_combine_fastqs(path_fastqs, os.path.join(args.output, 'temp'))
             logging.info('Convert FASTQs to FASTAs done!')
             logging.info('Combine FASTAs done!')
         else:
