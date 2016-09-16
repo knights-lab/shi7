@@ -62,6 +62,10 @@ def run_command(cmd, shell=False):
     return output
 
 
+def format_basename(filename):
+    return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(filename)))).split('.')[:-1])
+
+
 def read_fastq(fh):
     line = next(fh)
     while line:
@@ -93,9 +97,9 @@ def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     output_filenames = []
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
-        output_path_R1 = os.path.join(output_path, os.path.basename(input_path_R1))
+        output_path_R1 = os.path.join(output_path, format_basename(input_path_R1) + '.fastq')
         unpaired_R1 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
-        output_path_R2 = os.path.join(output_path, os.path.basename(input_path_R2))
+        output_path_R2 = os.path.join(output_path, format_basename(input_path_R2) + '.fastq')
         unpaired_R2 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
         trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '-threads', threads]
         logging.info(run_command(trim_cmd, shell=shell))
@@ -107,7 +111,7 @@ def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
 def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
-        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', re.sub('_R1_*.fastq', '', os.path.basename(input_path_R1)), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
+        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', format_basename(re.sub('R1', '', input_path_R1)), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
         logging.info(run_command(flash_cmd, shell=shell))
@@ -118,7 +122,7 @@ def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=
     [logging.info(filename) for filename in input_fastqs]
     output_filenames = []
     for path_input_fastq in input_fastqs:
-        path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags.fastq', '.trimmed.fastq', os.path.basename(path_input_fastq)))
+        path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags', '', format_basename(path_input_fastq)) + '.fastq')
         ninja_shi7_cmd = ['ninja_shi7_trimmer', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
         logging.info(run_command(ninja_shi7_cmd, shell=shell))
         output_filenames.append(path_output_fastq)
@@ -130,7 +134,7 @@ def convert_fastqs(input_fastqs, output_path):
     for path_input_fastq in input_fastqs:
         with open(path_input_fastq) as inf_fastq:
             gen_fastq = read_fastq(inf_fastq)
-            output_filename = os.path.join(output_path, re.sub('fastq', 'fna', os.path.basename(path_input_fastq)))
+            output_filename = os.path.join(output_path, format_basename(path_input_fastq) + '.fna')
             with open(output_filename, 'w') as outf_fasta:
                 for title, seq, quals in gen_fastq:
                     outf_fasta.write('>%s\n%s\n' % (title, seq))
@@ -201,9 +205,7 @@ def main():
     # CONVERT FASTA TO FASTQ
     if args.convert_fasta:
         if args.combine_fasta:
-            basenames = ['.'.join(
-                re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(f)))).split('.')[:-1])
-                                for f in path_fastqs]
+            basenames = [format_basename(filename) for filename in path_fastqs]
             path_fastqs = convert_combine_fastqs(path_fastqs, os.path.join(args.output, 'temp'), basenames=basenames)
             logging.info('Convert FASTQs to FASTAs done!')
             logging.info('Combine FASTAs done!')
