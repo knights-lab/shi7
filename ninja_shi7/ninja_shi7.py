@@ -132,14 +132,14 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
         if allow_outies:
             flash_cmd.append('-O')
         logging.info(run_command(flash_cmd, shell=shell))
-    return [os.path.join(output_path, f) for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
+    return [re.sub('.extendedFrags', '', sos.path.join(output_path, f)) for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
 
 
 def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
     [logging.info(filename) for filename in input_fastqs]
     output_filenames = []
     for path_input_fastq in input_fastqs:
-        path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags', '', format_basename(path_input_fastq)) + '.trimmed.fastq')
+        path_output_fastq = os.path.join(output_path, format_basename(path_input_fastq) + '.fastq')
         ninja_shi7_cmd = ['ninja_shi7_trimmer', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
         logging.info(run_command(ninja_shi7_cmd, shell=shell))
         output_filenames.append(path_output_fastq)
@@ -163,7 +163,7 @@ def convert_combine_fastqs(input_fastqs, output_path):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
     with open(output_filename, 'w') as outf_fasta:
         for path_input_fastq in input_fastqs:
-                basename = re.sub('.trimmed', '', format_basename(path_input_fastq))
+                basename = format_basename(path_input_fastq)
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
@@ -202,10 +202,12 @@ def main():
     logging.debug(path_fastqs)
 
     if args.axe_adaptors:
+        axe_output = os.path.join(args.output, 'temp', 'axe')
+        os.makedirs(axe_output)
         if args.single_end:
-            path_fastqs = axe_adaptors_single_end(path_fastqs, os.path.join(args.output, 'temp'), args.axe_adaptors, threads=args.threads, shell=args.shell)
+            path_fastqs = axe_adaptors_single_end(path_fastqs, axe_output, args.axe_adaptors, threads=args.threads, shell=args.shell)
         else:
-            path_fastqs = axe_adaptors_paired_end(path_fastqs, os.path.join(args.output, 'temp'), args.axe_adaptors, threads=args.threads, shell=args.shell)
+            path_fastqs = axe_adaptors_paired_end(path_fastqs, axe_output, args.axe_adaptors, threads=args.threads, shell=args.shell)
         whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('AXE_ADAPTORS done!')
 
@@ -213,7 +215,9 @@ def main():
     # FLASH
     if args.flash:
         if not args.single_end:
-            path_fastqs = flash(path_fastqs, os.path.join(args.output, 'temp'), args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
+            flash_output = os.path.join(args.output, 'temp', 'flash')
+            os.makedirs(flash_output)
+            path_fastqs = flash(path_fastqs, flash_output, args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
             whitelist(os.path.join(args.output, 'temp'), path_fastqs)
             logging.info('FLASH done!')
         else:
@@ -223,7 +227,9 @@ def main():
     # CREATE_TRIMMER_GENERAL
 
     if args.trim:
-        path_fastqs = trimmer(path_fastqs, os.path.join(args.output, 'temp'), args.trim_length, args.trim_qual, threads=args.threads, shell=args.shell)
+        trimmer_output = os.path.join(args.output, 'temp', 'trimmer')
+        os.makedirs(trimmer_output)
+        path_fastqs = trimmer(path_fastqs, trimmer_output, args.trim_length, args.trim_qual, threads=args.threads, shell=args.shell)
         whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('CREATE_TRIMMER_GENERAL done!')
 
@@ -231,12 +237,14 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # CONVERT FASTA TO FASTQ
     if args.convert_fasta:
+        convert_output = os.path.join(args.output, 'temp', 'convert')
+        os.makedirs(convert_output)
         if args.combine_fasta:
-            path_fastqs = convert_combine_fastqs(path_fastqs, os.path.join(args.output, 'temp'))
+            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output)
             logging.info('Convert FASTQs to FASTAs done!')
             logging.info('Combine FASTAs done!')
         else:
-            path_fastqs = convert_fastqs(path_fastqs, os.path.join(args.output, 'temp'))
+            path_fastqs = convert_fastqs(path_fastqs, convert_output)
             logging.info('Convert FASTQs to FASTAs done!')
 
     for file in path_fastqs:
