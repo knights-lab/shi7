@@ -93,8 +93,10 @@ def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
     output_filenames = []
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
         output_path_R1 = os.path.join(output_path, os.path.basename(input_path_R1))
+        unpaired_R1 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
         output_path_R2 = os.path.join(output_path, os.path.basename(input_path_R2))
-        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, 'unpaired.%s' % output_path_R1,  output_path_R2, 'unpaired.%s' % output_path_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '--threads', threads]
+        unpaired_R2 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
+        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '--threads', threads]
         run_command(trim_cmd, shell=shell)
         output_filenames.append(output_path_R1)
         output_filenames.append(output_path_R2)
@@ -190,7 +192,7 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # CREATE_TRIMMER_GENERAL
 
-    if args.trimmer:
+    if args.trim:
         path_fastqs = trimmer(path_fastqs, os.path.join(args.output, 'temp'), args.trim_length, args.trim_qual, threads=args.threads, shell=args.shell)
         print('CREATE_TRIMMER_GENERAL done!\n')
 
