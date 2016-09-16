@@ -106,7 +106,7 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
         flash_cmd = ['flash', input_path_R1, input_path_R2, '-o ', os.path.join(output_path, re.sub('_R1_+.fastq', '', os.path.basename(input_path_R1))), '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
-        run_command(allow_outies, shell=shell)
+        run_command(flash_cmd, shell=shell)
     return [f for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
 
 
