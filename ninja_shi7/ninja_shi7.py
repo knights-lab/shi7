@@ -168,6 +168,8 @@ def main():
         shutil.rmtree(os.path.join(args.output, 'temp'))
         print('Existing temp directory deleted.')
         os.makedirs(os.path.join(args.output, 'temp'))
+    else:
+        os.makedirs(os.path.join(args.output, 'temp'))
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # AXE_ADAPTORS
