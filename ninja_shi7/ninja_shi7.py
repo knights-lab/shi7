@@ -94,7 +94,7 @@ def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
         output_path_R1 = os.path.join(output_path, os.path.basename(input_path_R1))
         output_path_R2 = os.path.join(output_path, os.path.basename(input_path_R2))
-        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, output_path_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '--threads', threads]
+        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, 'unpaired.%s' % output_path_R1,  output_path_R2, 'unpaired.%s' % output_path_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '--threads', threads]
         run_command(trim_cmd, shell=shell)
         output_filenames.append(output_path_R1)
         output_filenames.append(output_path_R2)
