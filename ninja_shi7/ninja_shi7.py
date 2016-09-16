@@ -21,6 +21,7 @@ def make_arg_parser():
     parser.add_argument('--no_allow_outies', help='Disable "outie" orientation (default: Enabled)', dest='allow_outies', action='store_false')
     parser.add_argument('--no_convert_fasta', help='Disable convert FASTQS to FASTA (default: Enabled)', dest='convert_fasta', action='store_false')
     parser.add_argument('--no_combine_fasta', help='Disable the FASTA append mode (default: Enabled)', dest='combine_fasta', action='store_false')
+    parser.add_argument('--shell', help='Use shell in Python system calls, NOT RECOMMENDED (default: Disabled)', dest='shell', action='store_true')
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
@@ -31,7 +32,7 @@ def make_arg_parser():
                         help='Set the maximum overlap length between two reads (default: %(default)s)', default=700, type=int)
     parser.add_argument('-trim_l', '--trim_length', help='Set the trim length (default: %(default)s)', default=150, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
-    parser.set_defaults(flash=True, trim=True, allow_outies=True, convert_fasta=True, combine_fasta=True)
+    parser.set_defaults(flash=True, trim=True, allow_outies=True, convert_fasta=True, combine_fasta=True, shell=False)
     return parser
 
 
