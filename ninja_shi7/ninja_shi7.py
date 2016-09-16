@@ -136,7 +136,7 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
     for f in os.listdir(output_path):
         if f.endswith('extendedFrags.fastq'):
             dest = re.sub('.extendedFrags', '', os.path.join(output_path, f))
-            shutil.move(f, dest)
+            shutil.move(os.path.join(output_path, f), dest)
             output_filenames.append(dest)
     return output_filenames
 
