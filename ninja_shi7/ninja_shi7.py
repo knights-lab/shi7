@@ -96,7 +96,7 @@ def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
         unpaired_R1 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
         output_path_R2 = os.path.join(output_path, os.path.basename(input_path_R2))
         unpaired_R2 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
-        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '--threads', threads]
+        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '-threads', threads]
         run_command(trim_cmd, shell=shell)
         output_filenames.append(output_path_R1)
         output_filenames.append(output_path_R2)
@@ -115,7 +115,7 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
 
 def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
     with open(os.path.join(output_path, 'ninja_shi7_report.log'), 'w') as log:
-        log.writelines()
+        log.writelines(input_fastqs)
         output_filenames = []
         for path_input_fastq in input_fastqs:
             path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags.fastq', '.trimmed.fastq', os.path.basename(path_input_fastq)))
