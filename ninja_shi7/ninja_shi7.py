@@ -66,6 +66,13 @@ def format_basename(filename):
     return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(filename)))).split('.')[:-1])
 
 
+def whitelist(dir, whitelist):
+    for root, subdirs, files in os.walk(dir):
+            for file in files:
+                if os.path.join(root, file) not in whitelist:
+                    os.remove(os.path.join(root, file))
+
+
 def read_fastq(fh):
     line = next(fh)
     while line:
@@ -185,12 +192,14 @@ def main():
 
     if args.axe_adaptors:
         path_fastqs = axe_adaptors(path_fastqs, os.path.join(args.output, 'temp'), args.axe_adaptors, threads=args.threads, shell=args.shell)
+        whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('AXE_ADAPTORS done!')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # FLASH
     if args.flash:
         path_fastqs = flash(path_fastqs, os.path.join(args.output, 'temp'), args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
+        whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('FLASH done!')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -198,6 +207,7 @@ def main():
 
     if args.trim:
         path_fastqs = trimmer(path_fastqs, os.path.join(args.output, 'temp'), args.trim_length, args.trim_qual, threads=args.threads, shell=args.shell)
+        whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('CREATE_TRIMMER_GENERAL done!')
 
     # ">[SAMPLENAME]_[INDX starting at 0] HEADER"
