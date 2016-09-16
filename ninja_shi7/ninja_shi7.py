@@ -107,7 +107,7 @@ def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
 def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
-        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', os.path.join(output_path, re.sub('_R1_+.fastq', '', os.path.basename(input_path_R1))), '-M', max_overlap, '-m', min_overlap, '-t', threads]
+        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', re.sub('_R1_+.fastq', '', os.path.basename(input_path_R1)), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
         logging.info(run_command(flash_cmd, shell=shell))
