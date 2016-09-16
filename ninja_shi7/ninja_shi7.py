@@ -132,7 +132,7 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
         if allow_outies:
             flash_cmd.append('-O')
         logging.info(run_command(flash_cmd, shell=shell))
-    return [re.sub('.extendedFrags', '', sos.path.join(output_path, f)) for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
+    return [re.sub('.extendedFrags', '', os.path.join(output_path, f)) for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
 
 
 def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
