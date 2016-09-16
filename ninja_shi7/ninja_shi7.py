@@ -14,7 +14,8 @@ def make_arg_parser():
                                      usage='python ninja_shi7.py -i <input> -o <output> -t_trim <threads>...')
 
     # parser.add_argument('-adaptor', '--adaptor_type', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
-    parser.add_argument('-adaptor', '--adaptor_type', help='Path to the adaptor')
+    parser.add_argument('--axe_adaptors', help='Path to the adaptor', default=None)
+    # parser.add_argument('--no_axe_adaptors', help='Disable trimmomatic axe adaptors (default: Enabled)', dest='axe_adaptors', action='store_false')
     parser.add_argument('--no_flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
     parser.add_argument('--no_trim', help='Disable the TRIMMER (default: Enabled)', dest='trim', action='store_false')
     parser.add_argument('--no_allow_outies', help='Disable "outie" orientation (default: Enabled)', dest='allow_outies', action='store_false')
