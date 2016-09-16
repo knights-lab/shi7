@@ -119,7 +119,7 @@ def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=
     output_filenames = []
     for path_input_fastq in input_fastqs:
         path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags.fastq', '.trimmed.fastq', os.path.basename(path_input_fastq)))
-        ninja_shi7_cmd = ['ninja_shi7', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
+        ninja_shi7_cmd = ['ninja_shi7_trimmer', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
         logging.info(run_command(ninja_shi7_cmd, shell=shell))
         output_filenames.append(path_output_fastq)
     return output_filenames
@@ -140,7 +140,7 @@ def convert_fastqs(input_fastqs, output_path):
 
 def convert_combine_fastqs(input_fastqs, output_path, basenames):
     output_filenames = []
-    for i, path_input_fastq, basename in enumerate(zip(input_fastqs, basenames)):
+    for i, (path_input_fastq, basename) in enumerate(zip(input_fastqs, basenames)):
         output_filename = os.path.join(output_path, 'combined_seqs.fna')
         with open(output_filename, 'w') as outf_fasta:
             with open(path_input_fastq) as inf_fastq:
