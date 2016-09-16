@@ -8,6 +8,7 @@ import shutil
 import multiprocessing
 from datetime import datetime
 
+import logging
 
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for NINJA-SHI7',
@@ -46,7 +47,7 @@ def run_command(cmd, shell=False):
 
     try:
         cmd = [str(i) for i in cmd]
-        print(' '.join(cmd))
+        logging.debug(' '.join(cmd))
         output = subprocess.check_output(
             cmd,
             stderr=subprocess.STDOUT,
@@ -97,7 +98,7 @@ def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
         output_path_R2 = os.path.join(output_path, os.path.basename(input_path_R2))
         unpaired_R2 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
         trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '-threads', threads]
-        run_command(trim_cmd, shell=shell)
+        logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_path_R1)
         output_filenames.append(output_path_R2)
     return output_filenames
@@ -109,19 +110,18 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
         flash_cmd = ['flash', input_path_R1, input_path_R2, '-o ', os.path.join(output_path, re.sub('_R1_+.fastq', '', os.path.basename(input_path_R1))), '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
-        run_command(flash_cmd, shell=shell)
+        logging.info(run_command(flash_cmd, shell=shell))
     return [f for f in os.listdir(output_path) if f.endswith('extendedFrags.fastq')]
 
 
 def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
-    with open(os.path.join(output_path, 'ninja_shi7_report.log'), 'w') as log:
-        log.writelines(input_fastqs)
-        output_filenames = []
-        for path_input_fastq in input_fastqs:
-            path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags.fastq', '.trimmed.fastq', os.path.basename(path_input_fastq)))
-            ninja_shi7_cmd = ['ninja_shi7', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
-            log.write(run_command(ninja_shi7_cmd, shell=shell))
-            output_filenames.append(path_output_fastq)
+    [logging.info(filename) for filename in input_fastqs]
+    output_filenames = []
+    for path_input_fastq in input_fastqs:
+        path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags.fastq', '.trimmed.fastq', os.path.basename(path_input_fastq)))
+        ninja_shi7_cmd = ['ninja_shi7', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
+        logging.info(run_command(ninja_shi7_cmd, shell=shell))
+        output_filenames.append(path_output_fastq)
     return output_filenames
 
 
@@ -158,6 +158,8 @@ def main():
 
     parser = make_arg_parser()
     args = parser.parse_args()
+
+    logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), mode='w', level=logging.DEBUG)
 
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
     if not os.path.exists(args.input):
