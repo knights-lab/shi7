@@ -139,7 +139,7 @@ def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=
     [logging.info(filename) for filename in input_fastqs]
     output_filenames = []
     for path_input_fastq in input_fastqs:
-        path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags', '', format_basename(path_input_fastq)) + 'trimmed.fastq')
+        path_output_fastq = os.path.join(output_path, re.sub('.extendedFrags', '', format_basename(path_input_fastq)) + '.trimmed.fastq')
         ninja_shi7_cmd = ['ninja_shi7_trimmer', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
         logging.info(run_command(ninja_shi7_cmd, shell=shell))
         output_filenames.append(path_output_fastq)
