@@ -15,8 +15,9 @@ def make_arg_parser():
                                      usage='python ninja_shi7.py -i <input> -o <output> -t_trim <threads>...')
 
     # parser.add_argument('-adaptor', '--adaptor_type', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
+    parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     parser.add_argument('--axe_adaptors', help='Path to the adaptor file.', default=None)
-    parser.add_argument('--no_flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
+    parser.add_argument('--flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
     parser.add_argument('--no_trim', help='Disable the TRIMMER (default: Enabled)', dest='trim', action='store_false')
     parser.add_argument('--no_allow_outies', help='Disable "outie" orientation (default: Enabled)', dest='allow_outies', action='store_false')
     parser.add_argument('--no_convert_fasta', help='Disable convert FASTQS to FASTA (default: Enabled)', dest='convert_fasta', action='store_false')
@@ -32,7 +33,7 @@ def make_arg_parser():
                         help='Set the maximum overlap length between two reads (default: %(default)s)', default=700, type=int)
     parser.add_argument('-trim_l', '--trim_length', help='Set the trim length (default: %(default)s)', default=150, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
-    parser.set_defaults(flash=True, trim=True, allow_outies=True, convert_fasta=True, combine_fasta=True, shell=False)
+    parser.set_defaults(flash=True, trim=True, allow_outies=True, convert_fasta=True, combine_fasta=True, shell=False, single_end=False)
     return parser
 
 
@@ -99,7 +100,18 @@ def split_fwd_rev(paths):
     return path_R1_fastqs, path_R2_fastqs
 
 
-def axe_adaptors(input_fastqs, output_path, adapters, threads=1, shell=False):
+def axe_adaptors_single_end(input_fastqs, output_path, adapters, threads=1, shell=False):
+    output_filenames = []
+    for fastq in input_fastqs:
+        output_path = os.path.join(output_path, format_basename(fastq) + '.fastq')
+        unpaired = os.path.join(output_path, 'unpaired.%s' % os.path.basename(fastq))
+        trim_cmd = ['trimmomatic', 'SE', fastq, output_path, unpaired, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '-threads', threads]
+        logging.info(run_command(trim_cmd, shell=shell))
+        output_filenames.append(output_path)
+    return output_filenames
+
+
+def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shell=False):
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     output_filenames = []
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
@@ -190,16 +202,22 @@ def main():
     logging.debug(path_fastqs)
 
     if args.axe_adaptors:
-        path_fastqs = axe_adaptors(path_fastqs, os.path.join(args.output, 'temp'), args.axe_adaptors, threads=args.threads, shell=args.shell)
+        if args.single_end:
+            path_fastqs = axe_adaptors_single_end(path_fastqs, os.path.join(args.output, 'temp'), args.axe_adaptors, threads=args.threads, shell=args.shell)
+        else:
+            path_fastqs = axe_adaptors_paired_end(path_fastqs, os.path.join(args.output, 'temp'), args.axe_adaptors, threads=args.threads, shell=args.shell)
         whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('AXE_ADAPTORS done!')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # FLASH
     if args.flash:
-        path_fastqs = flash(path_fastqs, os.path.join(args.output, 'temp'), args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
-        whitelist(os.path.join(args.output, 'temp'), path_fastqs)
-        logging.info('FLASH done!')
+        if not args.single_end:
+            path_fastqs = flash(path_fastqs, os.path.join(args.output, 'temp'), args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
+            whitelist(os.path.join(args.output, 'temp'), path_fastqs)
+            logging.info('FLASH done!')
+        else:
+            logging.warning('Single End mode enabled with FLASH. Skipping this step.')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # CREATE_TRIMMER_GENERAL
