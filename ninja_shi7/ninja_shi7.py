@@ -10,14 +10,15 @@ from datetime import datetime
 
 import logging
 
+
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for NINJA-SHI7',
                                      usage='python ninja_shi7.py -i <input> -o <output> -t_trim <threads>...')
-
     # parser.add_argument('-adaptor', '--adaptor_type', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
+    # TODO: Download the adaptors from Trimmomatic
     parser.add_argument('--axe_adaptors', help='Path to the adaptor file.', default=None)
-    parser.add_argument('--flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
+    parser.add_argument('--no_flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
     parser.add_argument('--no_trim', help='Disable the TRIMMER (default: Enabled)', dest='trim', action='store_false')
     parser.add_argument('--no_allow_outies', help='Disable "outie" orientation (default: Enabled)', dest='allow_outies', action='store_false')
     parser.add_argument('--no_convert_fasta', help='Disable convert FASTQS to FASTA (default: Enabled)', dest='convert_fasta', action='store_false')
@@ -27,6 +28,7 @@ def make_arg_parser():
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
                         default=multiprocessing.cpu_count())
+    # TODO: Table of presets for different variable regions
     parser.add_argument('-m', '--min_overlap',
                         help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
     parser.add_argument('-M', '--max_overlap',
@@ -126,6 +128,8 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
 
 
 def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
+    # TODO: Can we run a two-pass approach?
+    # TODO: Wiki table and hard code most common presets 
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
         flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', format_basename(re.sub('R1', '', input_path_R1)), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
@@ -205,6 +209,7 @@ def main():
     # AXE_ADAPTORS
 
     path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq')]
+    # TODO: Filename to samplename map?
     logging.debug(path_fastqs)
 
     if args.axe_adaptors:
@@ -230,7 +235,7 @@ def main():
             logging.warning('Single End mode enabled with FLASH. Skipping this step.')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # CREATE_TRIMMER_GENERAL
+    # SHI7EN
 
     if args.trim:
         trimmer_output = os.path.join(args.output, 'temp', 'trimmer')
@@ -241,7 +246,7 @@ def main():
 
     # ">[SAMPLENAME]_[INDX starting at 0] HEADER"
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # CONVERT FASTA TO FASTQ
+    # CONVERT FASTQ TO FASTA
     if args.convert_fasta:
         convert_output = os.path.join(args.output, 'temp', 'convert')
         os.makedirs(convert_output)
