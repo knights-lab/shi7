@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import multiprocessing
+import pkg_resources
 from datetime import datetime
 
 import logging
@@ -14,10 +15,10 @@ import logging
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for NINJA-SHI7',
                                      usage='python ninja_shi7.py -i <input> -o <output> -t_trim <threads>...')
-    # parser.add_argument('-adaptor', '--adaptor_type', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
+    parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     # TODO: Download the adaptors from Trimmomatic
-    parser.add_argument('--axe_adaptors', help='Path to the adaptor file.', default=None)
+    #parser.add_argument('--axe_adaptors', help='Path to the adaptor file.', default=None)
     parser.add_argument('--no_flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
     parser.add_argument('--no_trim', help='Disable the TRIMMER (default: Enabled)', dest='trim', action='store_false')
     parser.add_argument('--no_allow_outies', help='Disable "outie" orientation (default: Enabled)', dest='allow_outies', action='store_false')
@@ -113,6 +114,8 @@ def axe_adaptors_single_end(input_fastqs, output_path, adapters, threads=1, shel
 
 
 def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shell=False):
+    adaptor_dict = {'Nextera': 'NexteraPE-PE.fa', 'TrueSeq2': 'TruSeq2-PE.fa', 'TrueSeq3': 'TruSeq3-PE.fa'}
+    adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters',adaptor_dict[adapters]))
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     output_filenames = []
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
@@ -120,7 +123,7 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
         unpaired_R1 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
         output_path_R2 = os.path.join(output_path, format_basename(input_path_R2) + '.fastq')
         unpaired_R2 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
-        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '-threads', threads]
+        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data, '-threads', threads]
         logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_path_R1)
         output_filenames.append(output_path_R2)
@@ -216,9 +219,9 @@ def main():
         axe_output = os.path.join(args.output, 'temp', 'axe')
         os.makedirs(axe_output)
         if args.single_end:
-            path_fastqs = axe_adaptors_single_end(path_fastqs, axe_output, args.axe_adaptors, threads=args.threads, shell=args.shell)
+            path_fastqs = axe_adaptors_single_end(path_fastqs, axe_output, args.adaptor, threads=args.threads, shell=args.shell)
         else:
-            path_fastqs = axe_adaptors_paired_end(path_fastqs, axe_output, args.axe_adaptors, threads=args.threads, shell=args.shell)
+            path_fastqs = axe_adaptors_paired_end(path_fastqs, axe_output, args.adaptor, threads=args.threads, shell=args.shell)
         whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('AXE_ADAPTORS done!')
 

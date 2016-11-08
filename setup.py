@@ -13,9 +13,11 @@ __version__ = "0.0.1-dev"
 long_description = 'All of your shi7 is one place. From quality scores to mappable reads.'
 
 setup(
-    name='ninja_shi7',
+    name='shi7en',
     version=__version__,
     packages=find_packages(),
+    package_data = {'': ['*.fa'], },
+    include_package_data=True,
     url='',
     license=__license__,
     author=__author__,
