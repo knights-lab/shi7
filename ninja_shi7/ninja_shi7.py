@@ -102,20 +102,29 @@ def split_fwd_rev(paths):
         raise ValueError('Error: The input directory %s must contain at least one pair of R1 & R2 fastq file!' % os.path.dirname(paths[0]))
     return path_R1_fastqs, path_R2_fastqs
 
+def resolve_adapter_path(adaptor_name, paired_end):
+    adaptor_dict_PE = {'Nextera': 'NexteraPE-PE.fa', 'TrueSeq2': 'TruSeq2-PE.fa', 'TrueSeq3': 'TruSeq3-PE.fa', 'TruSeq32': 'TruSeq3-PE-2.fa'}
+    adaptor_dict_SE = {'TruSeq2': 'TruSeq2-SE.fa', 'TruSeq3': 'TruSeq3-SE.fa'}
+    if paired_end:
+        adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters',adaptor_dict_PE[adaptor_name]))
+    else:
+        adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters',adaptor_dict_SE[adaptor_name]))
+    return adap_data   
+
 
 def axe_adaptors_single_end(input_fastqs, output_path, adapters, threads=1, shell=False):
+    adap_data = resolve_adapter_path(adapters, 0)
     output_filenames = []
     for fastq in input_fastqs:
         output_fastq = os.path.join(output_path, format_basename(fastq) + '.fastq')
-        trim_cmd = ['trimmomatic', 'SE', fastq, output_fastq, 'ILLUMINACLIP:%s:2:30:10:2:true' % adapters, '-threads', threads]
+        trim_cmd = ['trimmomatic', 'SE', fastq, output_fastq, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data, '-threads', threads]
         logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_fastq)
-    return output_filenames
+    return output_filenames 
 
 
 def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shell=False):
-    adaptor_dict = {'Nextera': 'NexteraPE-PE.fa', 'TrueSeq2': 'TruSeq2-PE.fa', 'TrueSeq3': 'TruSeq3-PE.fa'}
-    adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters',adaptor_dict[adapters]))
+    adap_data = resolve_adapter_path(adapters, 1)
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     output_filenames = []
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
@@ -192,7 +201,6 @@ def main():
     parser = make_arg_parser()
     args = parser.parse_args()
 
-    logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
     if not os.path.exists(args.input):
@@ -200,6 +208,9 @@ def main():
 
     if not os.path.exists(args.output):
         os.makedirs(args.output)
+
+    # Put in the logging file
+    logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     if os.path.exists(os.path.join(args.output, 'temp')):
         shutil.rmtree(os.path.join(args.output, 'temp'))
