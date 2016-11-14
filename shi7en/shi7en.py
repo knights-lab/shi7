@@ -246,7 +246,7 @@ def main():
             logging.info('FLASH done!')
         else:
             logging.warning('Single End mode enabled with FLASH. Skipping this step.')
-'''
+
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # SHI7EN
 
@@ -278,7 +278,7 @@ def main():
         shutil.move(file, args.output)
     shutil.rmtree(os.path.join(args.output, 'temp'))
     logging.info('Execution time: %s' % (datetime.now() - start_time))
-'''
+
 
 if __name__ == '__main__':
     main()
