@@ -103,7 +103,7 @@ def split_fwd_rev(paths):
     return path_R1_fastqs, path_R2_fastqs
 
 def resolve_adapter_path(adaptor_name, paired_end):
-    adaptor_dict_PE = {'Nextera': 'NexteraPE-PE.fa', 'TrueSeq2': 'TruSeq2-PE.fa', 'TrueSeq3': 'TruSeq3-PE.fa', 'TruSeq32': 'TruSeq3-PE-2.fa'}
+    adaptor_dict_PE = {'Nextera': 'NexteraPE-PE.fa', 'TruSeq2': 'TruSeq2-PE.fa', 'TruSeq3': 'TruSeq3-PE.fa', 'TruSeq32': 'TruSeq3-PE-2.fa'}
     adaptor_dict_SE = {'TruSeq2': 'TruSeq2-SE.fa', 'TruSeq3': 'TruSeq3-SE.fa'}
     if paired_end:
         adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters',adaptor_dict_PE[adaptor_name]))
