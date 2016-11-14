@@ -226,7 +226,7 @@ def main():
     # TODO: Filename to samplename map?
     logging.debug(path_fastqs)
 
-    if args.axe_adaptors:
+    if args.adaptor:
         axe_output = os.path.join(args.output, 'temp', 'axe')
         os.makedirs(axe_output)
         if args.single_end:
