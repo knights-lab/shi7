@@ -156,7 +156,7 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
             output_filenames.append(dest)
     return output_filenames
 
-'''
+
 def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
     [logging.info(filename) for filename in input_fastqs]
     output_filenames = []
@@ -191,7 +191,7 @@ def convert_combine_fastqs(input_fastqs, output_path):
                     for i, (title, seq, quals) in enumerate(gen_fastq):
                         outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
-'''
+
 
 def main():
     # gcc -m64 -O3 ninja_shi7.c -o ninja_shi7
@@ -246,7 +246,7 @@ def main():
             logging.info('FLASH done!')
         else:
             logging.warning('Single End mode enabled with FLASH. Skipping this step.')
-
+'''
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # SHI7EN
 
@@ -278,7 +278,7 @@ def main():
         shutil.move(file, args.output)
     shutil.rmtree(os.path.join(args.output, 'temp'))
     logging.info('Execution time: %s' % (datetime.now() - start_time))
-
+'''
 
 if __name__ == '__main__':
     main()
