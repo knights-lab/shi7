@@ -235,7 +235,6 @@ def main():
             path_fastqs = axe_adaptors_paired_end(path_fastqs, axe_output, args.adaptor, threads=args.threads, shell=args.shell)
         whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('AXE_ADAPTORS done!')
-'''
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # FLASH
     if args.flash:
@@ -279,7 +278,7 @@ def main():
         shutil.move(file, args.output)
     shutil.rmtree(os.path.join(args.output, 'temp'))
     logging.info('Execution time: %s' % (datetime.now() - start_time))
-'''
+
 
 if __name__ == '__main__':
     main()

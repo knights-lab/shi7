@@ -16,7 +16,7 @@ setup(
     name='shi7en',
     version=__version__,
     packages=find_packages(),
-    package_data = {'ninja_shi7': ['adapters/*.fa']},
+    package_data = {'shi7en': ['adapters/*.fa']},
     #include_package_data=True,
     url='',
     license=__license__,
@@ -28,7 +28,7 @@ setup(
     install_requires=[],
     entry_points={
         'console_scripts': [
-            'shi7en = ninja_shi7.ninja_shi7:main',
+            'shi7en = shi7en.shi7en:main',
         ]
     },
 )
