@@ -41,7 +41,7 @@ Now that everything is installed, the command 'shi7en' will be on your path when
 $ shi7en --help
 usage: python shi7eb.py -i <input> -o <output> -t_trim <threads>...
 
-This is the commandline interface for NINJA-SHI7
+This is the commandline interface for shi7en
 
 optional arguments:
   -h, --help            show this help message and exit
