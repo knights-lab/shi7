@@ -39,12 +39,14 @@ Now that everything is installed, the command 'shi7en' will be on your path when
 
 ```
 $ shi7en --help
-usage: python shi7eb.py -i <input> -o <output> -t_trim <threads>...
+shi7en --help
+usage: shi7en -i <input> -o <output> -t_trim <threads>...
 
 This is the commandline interface for shi7en
 
 optional arguments:
   -h, --help            show this help message and exit
+  --debug               Enable debug (default: Disabled)
   --adaptor {None,Nextera,TruSeq3,TruSeq2}
                         Set the type of the adaptor (default: None)
   -SE                   Run in Single End mode (default: Disabled)
@@ -60,7 +62,7 @@ optional arguments:
   -o OUTPUT, --output OUTPUT
                         Set the directory path of the output (default: cwd)
   -t THREADS, --threads THREADS
-                        Set the number of threads (default: 4)
+                        Set the number of threads (default: 96)
   -m MIN_OVERLAP, --min_overlap MIN_OVERLAP
                         Set the minimum overlap length between two reads. If
                         V4 set to 285 (default: 20)

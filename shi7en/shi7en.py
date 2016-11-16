@@ -14,7 +14,7 @@ import logging
 
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
-                                     usage='python shi7eb.py -i <input> -o <output> -t_trim <threads>...')
+                                     usage='shi7en -i <input> -o <output> -t_trim <threads>...')
     parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
