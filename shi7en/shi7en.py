@@ -15,6 +15,7 @@ import logging
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
                                      usage='python shi7eb.py -i <input> -o <output> -t_trim <threads>...')
+    parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     # TODO: Download the adaptors from Trimmomatic
@@ -212,6 +213,9 @@ def main():
     # Put in the logging file
     logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
+    if args.debug:
+        logging.info('Debug Mode is Enabled. Retaining intermediate files.')
+
     if os.path.exists(os.path.join(args.output, 'temp')):
         shutil.rmtree(os.path.join(args.output, 'temp'))
         logging.info('Existing temp directory deleted.')
@@ -233,7 +237,8 @@ def main():
             path_fastqs = axe_adaptors_single_end(path_fastqs, axe_output, args.adaptor, threads=args.threads, shell=args.shell)
         else:
             path_fastqs = axe_adaptors_paired_end(path_fastqs, axe_output, args.adaptor, threads=args.threads, shell=args.shell)
-        whitelist(os.path.join(args.output, 'temp'), path_fastqs)
+        if not args.debug:
+            whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('AXE_ADAPTORS done!')
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # FLASH
@@ -242,7 +247,8 @@ def main():
             flash_output = os.path.join(args.output, 'temp', 'flash')
             os.makedirs(flash_output)
             path_fastqs = flash(path_fastqs, flash_output, args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
-            whitelist(os.path.join(args.output, 'temp'), path_fastqs)
+            if not args.debug:
+                whitelist(os.path.join(args.output, 'temp'), path_fastqs)
             logging.info('FLASH done!')
         else:
             logging.warning('Single End mode enabled with FLASH. Skipping this step.')
@@ -254,7 +260,8 @@ def main():
         trimmer_output = os.path.join(args.output, 'temp', 'trimmer')
         os.makedirs(trimmer_output)
         path_fastqs = trimmer(path_fastqs, trimmer_output, args.trim_length, args.trim_qual, threads=args.threads, shell=args.shell)
-        whitelist(os.path.join(args.output, 'temp'), path_fastqs)
+        if not args.debug:
+            whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('CREATE_TRIMMER_GENERAL done!')
 
     # ">[SAMPLENAME]_[INDX starting at 0] HEADER"
@@ -276,7 +283,8 @@ def main():
         if os.path.exists(dest):
             os.remove(dest)
         shutil.move(file, args.output)
-    shutil.rmtree(os.path.join(args.output, 'temp'))
+    if not args.debug:
+        shutil.rmtree(os.path.join(args.output, 'temp'))
     logging.info('Execution time: %s' % (datetime.now() - start_time))
 
 
