@@ -211,7 +211,7 @@ def main():
         os.makedirs(args.output)
 
     # Put in the logging file
-    logging.basicConfig(filename=os.path.join(args.output, 'ninja_shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(filename=os.path.join(args.output, 'shi7en.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     if args.debug:
         logging.info('Debug Mode is Enabled. Retaining intermediate files.')
