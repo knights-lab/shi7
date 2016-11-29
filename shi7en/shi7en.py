@@ -18,13 +18,11 @@ def make_arg_parser():
     parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
-    # TODO: Download the adaptors from Trimmomatic
-    #parser.add_argument('--axe_adaptors', help='Path to the adaptor file.', default=None)
-    parser.add_argument('--no_flash', help='Disable FLASH stiching (default: Enabled)', dest='flash', action='store_false')
-    parser.add_argument('--no_trim', help='Disable the TRIMMER (default: Enabled)', dest='trim', action='store_false')
-    parser.add_argument('--no_allow_outies', help='Disable "outie" orientation (default: Enabled)', dest='allow_outies', action='store_false')
-    parser.add_argument('--no_convert_fasta', help='Disable convert FASTQS to FASTA (default: Enabled)', dest='convert_fasta', action='store_false')
-    parser.add_argument('--no_combine_fasta', help='Disable the FASTA append mode (default: Enabled)', dest='combine_fasta', action='store_false')
+    parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stiching (default: True)', choices=[True,False], dest='flash')
+    parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True,False], dest='trim')
+    parser.add_argument('--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True,False], dest='allow_outies')
+    parser.add_argument('--convert_fasta', help='Enable (True) or Disable (False) the conversion of FASTQS to FASTA (default: True)', choices=[True,False], dest='convert_fasta')
+    parser.add_argument('--combine_fasta', help='Enable (True) or Disable (False) the FASTA append mode (default: True)', choices=[True,False], dest='combine_fasta')
     parser.add_argument('--shell', help='Use shell in Python system calls, NOT RECOMMENDED (default: Disabled)', dest='shell', action='store_true')
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
@@ -206,6 +204,9 @@ def main():
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
     if not os.path.exists(args.input):
         raise ValueError('Error: Input directory %s doesn\'t exist!' % args.input)
+
+    if not convert_fasta and combine_fasta:
+        raise ValueError('Error: convert_fasta must be enabled if combine_fasta is enabled!')
 
     if not os.path.exists(args.output):
         os.makedirs(args.output)
