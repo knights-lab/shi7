@@ -17,7 +17,6 @@ setup(
     version=__version__,
     packages=find_packages(),
     package_data = {'shi7en': ['adapters/*.fa']},
-    #include_package_data=True,
     url='',
     license=__license__,
     author=__author__,
