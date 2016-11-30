@@ -212,7 +212,7 @@ def main():
     if not os.path.exists(args.input):
         raise ValueError('Error: Input directory %s doesn\'t exist!' % args.input)
 
-    if not convert_fasta and combine_fasta:
+    if not args.convert_fasta and args.combine_fasta:
         raise ValueError('Error: convert_fasta must be enabled if combine_fasta is enabled!')
 
     if not os.path.exists(args.output):
