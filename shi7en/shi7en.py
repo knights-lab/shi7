@@ -11,14 +11,13 @@ from datetime import datetime
 
 import logging
 
+t_f_values = {"True": True, "False": False}
 
 def convert_t_or_f(value):
-    return value.get(value)
+    return t_f_values[value]
 
 
 def make_arg_parser():
-
-    t_f_values = {"True": True, "False": False}
 
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
                                      usage='shi7en -i <input> -o <output> -t_trim <threads>...')
