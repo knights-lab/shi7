@@ -22,7 +22,7 @@ def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
                                      usage='shi7en -i <input> -o <output> -t_trim <threads>...')
     parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
-    parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2', 'TrueSeq32'], default=None)
+    parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stiching (default: True)', choices=[True,False], default='True', type=convert_t_or_f)
     parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True,False], default='True', type=convert_t_or_f)
@@ -109,8 +109,8 @@ def split_fwd_rev(paths):
     return path_R1_fastqs, path_R2_fastqs
 
 def resolve_adapter_path(adaptor_name, paired_end):
-    adaptor_dict_PE = {'Nextera': 'NexteraPE-PE.fa', 'TruSeq2': 'TruSeq2-PE.fa', 'TruSeq3': 'TruSeq3-PE.fa', 'TruSeq32': 'TruSeq3-PE-2.fa'}
-    adaptor_dict_SE = {'TruSeq2': 'TruSeq2-SE.fa', 'TruSeq3': 'TruSeq3-SE.fa', 'Nextera': 'NexteraPE-PE.fa', 'TruSeq32': 'TruSeq3-PE-2.fa'}
+    adaptor_dict_PE = {'Nextera': 'NexteraPE-PE.fa', 'TruSeq2': 'TruSeq2-PE.fa', 'TruSeq3': 'TruSeq3-PE.fa', 'TruSeq3-2': 'TruSeq3-PE-2.fa'}
+    adaptor_dict_SE = {'TruSeq2': 'TruSeq2-SE.fa', 'TruSeq3': 'TruSeq3-SE.fa', 'Nextera': 'NexteraPE-PE.fa', 'TruSeq3-2': 'TruSeq3-PE-2.fa'}
     if paired_end:
         adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters',adaptor_dict_PE[adaptor_name]))
     else:
