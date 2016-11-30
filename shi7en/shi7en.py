@@ -12,17 +12,25 @@ from datetime import datetime
 import logging
 
 
+def t_or_f(arg):
+    ua = str(arg).upper()
+    if 'TRUE'.startswith(ua):
+       return True
+    else:
+       return False
+
+
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
                                      usage='shi7en -i <input> -o <output> -t_trim <threads>...')
     parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
-    parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stiching (default: True)', choices=[True,False], dest='flash')
-    parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True,False], dest='trim')
-    parser.add_argument('--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True,False], dest='allow_outies')
-    parser.add_argument('--convert_fasta', help='Enable (True) or Disable (False) the conversion of FASTQS to FASTA (default: True)', choices=[True,False], dest='convert_fasta')
-    parser.add_argument('--combine_fasta', help='Enable (True) or Disable (False) the FASTA append mode (default: True)', choices=[True,False], dest='combine_fasta')
+    parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stiching (default: True)', choices=['True','False'], default='True')
+    parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=['True','False'], default='True')
+    parser.add_argument('--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=['True','False'], default='True')
+    parser.add_argument('--convert_fasta', help='Enable (True) or Disable (False) the conversion of FASTQS to FASTA (default: True)', choices=['True','False'], default='True')
+    parser.add_argument('--combine_fasta', help='Enable (True) or Disable (False) the FASTA append mode (default: True)', choices=['True','False'], default='True')
     parser.add_argument('--shell', help='Use shell in Python system calls, NOT RECOMMENDED (default: Disabled)', dest='shell', action='store_true')
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
@@ -35,7 +43,8 @@ def make_arg_parser():
                         help='Set the maximum overlap length between two reads. If V4 set to 300 (default: %(default)s)', default=700, type=int)
     parser.add_argument('-trim_l', '--trim_length', help='Set the trim length (default: %(default)s)', default=150, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
-    parser.set_defaults(flash=True, trim=True, allow_outies=True, convert_fasta=True, combine_fasta=True, shell=False, single_end=False)
+    parser.set_defaults(shell=False, single_end=False)
+    
     return parser
 
 
@@ -199,6 +208,11 @@ def main():
 
     parser = make_arg_parser()
     args = parser.parse_args()
+
+    parse_true_false = ['flash', 'trim', 'allow_outies', 'convert_fasta', 'combine_fasta']
+
+    for name in parse_true_false:
+        args[name] = t_or_f(args[name])
 
 
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
