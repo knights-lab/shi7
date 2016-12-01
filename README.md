@@ -46,15 +46,26 @@ This is the commandline interface for shi7en
 
 optional arguments:
   -h, --help            show this help message and exit
+  --gotta_split {True,False}
+                        Split one giant fastq (well, one pair -- an R1 and R2)
+                        into samples
   --debug               Enable debug (default: Disabled)
-  --adaptor {None,Nextera,TruSeq3,TruSeq2}
+  --adaptor {None,Nextera,TruSeq3,TruSeq2,TruSeq3-2}
                         Set the type of the adaptor (default: None)
   -SE                   Run in Single End mode (default: Disabled)
-  --no_flash            Disable FLASH stiching (default: Enabled)
-  --no_trim             Disable the TRIMMER (default: Enabled)
-  --no_allow_outies     Disable "outie" orientation (default: Enabled)
-  --no_convert_fasta    Disable convert FASTQS to FASTA (default: Enabled)
-  --no_combine_fasta    Disable the FASTA append mode (default: Enabled)
+  --flash {True,False}  Enable (True) or Disable (False) FLASH stiching
+                        (default: True)
+  --trim {True,False}   Enable (True) or Disable (False) the TRIMMER (default:
+                        True)
+  --allow_outies {True,False}
+                        Enable (True) or Disable (False) the "outie"
+                        orientation (default: True)
+  --convert_fasta {True,False}
+                        Enable (True) or Disable (False) the conversion of
+                        FASTQS to FASTA (default: True)
+  --combine_fasta {True,False}
+                        Enable (True) or Disable (False) the FASTA append mode
+                        (default: True)
   --shell               Use shell in Python system calls, NOT RECOMMENDED
                         (default: Disabled)
   -i INPUT, --input INPUT
@@ -62,7 +73,7 @@ optional arguments:
   -o OUTPUT, --output OUTPUT
                         Set the directory path of the output (default: cwd)
   -t THREADS, --threads THREADS
-                        Set the number of threads (default: 96)
+                        Set the number of threads (default: 4)
   -m MIN_OVERLAP, --min_overlap MIN_OVERLAP
                         Set the minimum overlap length between two reads. If
                         V4 set to 285 (default: 20)
@@ -73,4 +84,5 @@ optional arguments:
                         Set the trim length (default: 150)
   -trim_q TRIM_QUAL, --trim_qual TRIM_QUAL
                         Set the trim qual (default: 20)
+
 ```
