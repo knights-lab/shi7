@@ -21,6 +21,7 @@ def make_arg_parser():
 
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
                                      usage='shi7en -i <input> -o <output> -t_trim <threads>...')
+    parser.add_argument('--gotta_split', help='Split one giant fastq (well, one pair -- an R1 and R2) into samples', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
     parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
@@ -198,6 +199,11 @@ def convert_combine_fastqs(input_fastqs, output_path):
                         outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
 
+'''
+def gotta_split(input_fastqs, output_path):
+    gotta_split_cmd = ['gotta_split -i', input_fastqs, '-o', output_path]
+    logging.info(run_command(gotta_split_cmd, shell=shell))
+'''
 
 def main():
     # gcc -m64 -O3 ninja_shi7.c -o ninja_shi7
@@ -230,6 +236,16 @@ def main():
         os.makedirs(os.path.join(args.output, 'temp'))
     else:
         os.makedirs(os.path.join(args.output, 'temp'))
+
+    # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # GOTTA_SPLIT 
+'''
+    if args.split:
+        split_output = os.path.join(os.path.dirname(args.input), 'splitted fastqs')
+        gotta_split(args.input, split_output)
+        args.input = split_output
+        logging.info('Gotta Split done!')
+'''
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # AXE_ADAPTORS
