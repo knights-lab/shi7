@@ -33,7 +33,7 @@ pip install git+https://github.com/knights-lab/shi7en --upgrade --no-cache-dir
 
 With the flags provided to pip, copying and pasting any of these commands will redo the installation if a failure happened.
 
-The final step of the procedure is to add the binary shi7en_trimmer to your path. The binary is available on the release page. It is either ```ninja_shi7_linux``` or ```ninja_shi7_mac```, depending on your machine. Please rename it to ```shi7en_trimmer```. The tutorial for adding the binary to your parh is shown as following:
+The final step of the procedure is to add the binary shi7en_trimmer to your path. The binary is available on the release page. It is either ```ninja_shi7_linux``` or ```ninja_shi7_mac```, depending on your machine. Please rename it to ```shi7en_trimmer```. The tutorial for adding the binary to your path is shown as following:
 
 ```
 echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
