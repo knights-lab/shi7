@@ -33,7 +33,17 @@ pip install git+https://github.com/knights-lab/shi7en --upgrade --no-cache-dir
 
 With the flags provided to pip, copying and pasting any of these commands will redo the installation if a failure happened.
 
-The final step of the procedure is to add the binary shi7en_trimmer to your path. That binary is available on the release page.
+The final step of the procedure is to add the binary shi7en_trimmer to your path. That binary is available on the release page. The tutorial is shown as following:
+
+```
+echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
+
+```
+### Example
+If your binary is in your ```/home/username/Downloads/shi7en_trimmer```, you can add the binary to your path in this way:
+```
+echo 'PATH=$PATH:/home/username/Downloads/shi7en_trimmer' >> ~/.bashrc
+```
 
 Now that everything is installed, the command 'shi7en' will be on your path when the conda environment is active. Here is the helpfile for the command:
 
