@@ -37,6 +37,7 @@ The final step of the procedure is to add the binary shi7en_trimmer to your path
 
 ```
 echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
+. ~/.bashrc
 ```
 
 ### Example
