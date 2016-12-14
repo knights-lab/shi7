@@ -104,6 +104,7 @@ def read_fastq(fh):
 
 def split_fwd_rev(paths):
     paths = sorted(paths)
+    print(paths)
     path_R1_fastqs = [f for f in paths if 'R1' in os.path.basename(f)]
     path_R2_fastqs = [f for f in paths if 'R2' in os.path.basename(f)]
     if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
