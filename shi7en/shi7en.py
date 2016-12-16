@@ -36,7 +36,7 @@ def make_arg_parser():
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
-                        default=multiprocessing.cpu_count())
+                        default=min(multiprocessing.cpu_count(),16))
     # TODO: Table of presets for different variable regions
     parser.add_argument('-m', '--min_overlap',
                         help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
@@ -142,7 +142,7 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
         unpaired_R1 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
         output_path_R2 = os.path.join(output_path, format_basename(input_path_R2) + '.fastq')
         unpaired_R2 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
-        trim_cmd = ['trimmomatic', 'PE', '-threads', threads, input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data]
+        trim_cmd = ['trimmomatic', 'PE', input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data, '-threads', threads]
         logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_path_R1)
         output_filenames.append(output_path_R2)
