@@ -42,7 +42,7 @@ def make_arg_parser():
                         help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
     parser.add_argument('-M', '--max_overlap',
                         help='Set the maximum overlap length between two reads. If V4 set to 300 (default: %(default)s)', default=700, type=int)
-    parser.add_argument('-trim_l', '--trim_length', help='Set the trim length (default: %(default)s)', default=150, type=int)
+    parser.add_argument('-filter_l', '-filter_length', help='Set the filter length (default: %(default)s)', default=150, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
     parser.set_defaults(shell=False, single_end=False)
     
@@ -167,12 +167,12 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
     return output_filenames
 
 
-def trimmer(input_fastqs, output_path, trim_length, trim_qual, threads=1, shell=False):
+def trimmer(input_fastqs, output_path, filter_length, trim_qual, threads=1, shell=False):
     [logging.info(filename) for filename in input_fastqs]
     output_filenames = []
     for path_input_fastq in input_fastqs:
         path_output_fastq = os.path.join(output_path, format_basename(path_input_fastq) + '.fastq')
-        shi7en_cmd = ['shi7en_trimmer', path_input_fastq, path_output_fastq, trim_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
+        shi7en_cmd = ['shi7en_trimmer', path_input_fastq, path_output_fastq, filter_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
         logging.info(run_command(shi7en_cmd, shell=shell))
         output_filenames.append(path_output_fastq)
     return output_filenames
@@ -297,7 +297,7 @@ def main():
     if args.trim:
         trimmer_output = os.path.join(args.output, 'temp', 'trimmer')
         os.makedirs(trimmer_output)
-        path_fastqs = trimmer(path_fastqs, trimmer_output, args.trim_length, args.trim_qual, threads=args.threads, shell=args.shell)
+        path_fastqs = trimmer(path_fastqs, trimmer_output, args.filter_length, args.trim_qual, threads=args.threads, shell=args.shell)
         if not args.debug:
             whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('CREATE_TRIMMER_GENERAL done!')
