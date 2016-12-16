@@ -106,8 +106,8 @@ def read_fastq(fh):
 
 def split_fwd_rev(paths):
     paths = sorted(paths)
-    path_R1_fastqs = [f for f in paths if 'R1' in os.path.basename(f)]
-    path_R2_fastqs = [f for f in paths if 'R2' in os.path.basename(f)]
+    # Split by even odd index
+    path_R1_fastqs, path_R2_fastqs = paths[::2], paths[1::2]
     if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
         raise ValueError('Error: The input directory %s must contain at least one pair of R1 & R2 fastq file!' % os.path.dirname(paths[0]))
     return path_R1_fastqs, path_R2_fastqs
