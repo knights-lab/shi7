@@ -42,7 +42,7 @@ def make_arg_parser():
                         help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
     parser.add_argument('-M', '--max_overlap',
                         help='Set the maximum overlap length between two reads. If V4 set to 300 (default: %(default)s)', default=700, type=int)
-    parser.add_argument('-filter_l', '-filter_length', help='Set the filter length (default: %(default)s)', default=150, type=int)
+    parser.add_argument('-filter_l', '--filter_length', help='Set the filter length (default: %(default)s)', default=150, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
     parser.set_defaults(shell=False, single_end=False)
     
