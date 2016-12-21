@@ -13,12 +13,13 @@ import logging
 
 t_f_values = {"True": True, "False": False}
 
+
 def convert_t_or_f(value):
     return t_f_values[value]
 
 
 def make_arg_parser():
-
+    # TODO: Preset modes will get precedence over default values, but lose to explicit settings from user
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
                                      usage='shi7en -i <input> -o <output> -t_trim <threads>...')
     parser.add_argument('--gotta_split', help='Split one giant fastq (well, one pair -- an R1 and R2) into samples', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
@@ -42,10 +43,11 @@ def make_arg_parser():
                         help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
     parser.add_argument('-M', '--max_overlap',
                         help='Set the maximum overlap length between two reads. If V4 set to 300 (default: %(default)s)', default=700, type=int)
-    parser.add_argument('-filter_l', '--filter_length', help='Set the filter length (default: %(default)s)', default=150, type=int)
+    # TODO: The read lengths should be cut in half when you are in SE mode
+    parser.add_argument('-filter_l', '--filter_length', help='Set the filter length (default: %(default)s)', default=80, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
     parser.set_defaults(shell=False, single_end=False)
-    
+
     return parser
 
 
@@ -108,21 +110,26 @@ def split_fwd_rev(paths):
     paths = sorted(paths)
     # Split by even odd index
     path_R1_fastqs, path_R2_fastqs = paths[::2], paths[1::2]
+    # for r1, r2 in zip(path_R1_fastqs, path_R2_fastqs):
+        # TODO Replace '1's with '2's and check for name equality
+        # break
     if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
         raise ValueError('Error: The input directory %s must contain at least one pair of R1 & R2 fastq file!' % os.path.dirname(paths[0]))
     return path_R1_fastqs, path_R2_fastqs
+
 
 def resolve_adapter_path(adaptor_name, paired_end):
     adaptor_dict_PE = {'Nextera': 'NexteraPE-PE.fa', 'TruSeq2': 'TruSeq2-PE.fa', 'TruSeq3': 'TruSeq3-PE.fa', 'TruSeq3-2': 'TruSeq3-PE-2.fa'}
     adaptor_dict_SE = {'TruSeq2': 'TruSeq2-SE.fa', 'TruSeq3': 'TruSeq3-SE.fa', 'Nextera': 'NexteraPE-PE.fa', 'TruSeq3-2': 'TruSeq3-PE-2.fa'}
     if paired_end:
-        adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters',adaptor_dict_PE[adaptor_name]))
+        adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters', adaptor_dict_PE[adaptor_name]))
     else:
-        adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters',adaptor_dict_SE[adaptor_name]))
-    return adap_data   
+        adap_data = pkg_resources.resource_filename(__name__, os.path.join('adapters', adaptor_dict_SE[adaptor_name]))
+    return adap_data
 
 
 def axe_adaptors_single_end(input_fastqs, output_path, adapters, threads=1, shell=False):
+    # Can we automate the adaptors?
     adap_data = resolve_adapter_path(adapters, 0)
     output_filenames = []
     for fastq in input_fastqs:
@@ -130,7 +137,7 @@ def axe_adaptors_single_end(input_fastqs, output_path, adapters, threads=1, shel
         trim_cmd = ['trimmomatic', 'SE', '-threads', threads, fastq, output_fastq, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data]
         logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_fastq)
-    return output_filenames 
+    return output_filenames
 
 
 def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shell=False):
@@ -151,7 +158,7 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
 
 def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
     # TODO: Can we run a two-pass approach?
-    # TODO: Wiki table and hard code most common presets 
+    # TODO: Wiki table and hard code most common presets
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
         flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', format_basename(re.sub('R1', '', input_path_R1)), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
@@ -253,8 +260,8 @@ def main():
         os.makedirs(os.path.join(args.output, 'temp'))
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # GOTTA_SPLIT 
-    
+    # GOTTA_SPLIT
+
     if args.split:
         splitted_output = os.path.join(os.path.dirname(args.input), 'splitted fastqs') #the args.input here is the oligos path
         gotta_split(args.input, args.r1, args.r2, splitted_output)
