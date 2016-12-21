@@ -11,7 +11,19 @@ from datetime import datetime
 
 import logging
 
-t_f_values = {"True": True, "False": False}
+t_f_values = {"True": True,
+              "False": False,
+              "true": True,
+              "false": False,
+              "T": True,
+              "F": False,
+              "t": True,
+              "f": False,
+              "1": True,
+              "0": False,
+              "TRUE": True,
+              "FALSE": False
+              }
 
 
 def convert_t_or_f(value):
@@ -28,11 +40,11 @@ def make_arg_parser():
     parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
-    parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stiching (default: True)', choices=[True,False], default='True', type=convert_t_or_f)
-    parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True,False], default='True', type=convert_t_or_f)
-    parser.add_argument('--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True,False], default='True', type=convert_t_or_f)
-    parser.add_argument('--convert_fasta', help='Enable (True) or Disable (False) the conversion of FASTQS to FASTA (default: True)', choices=[True,False], default='True', type=convert_t_or_f)
-    parser.add_argument('--combine_fasta', help='Enable (True) or Disable (False) the FASTA append mode (default: True)', choices=[True,False], default='True', type=convert_t_or_f)
+    parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stitching (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
+    parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
+    parser.add_argument('--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
+    parser.add_argument('--convert_fasta', help='Enable (True) or Disable (False) the conversion of FASTQS to FASTA (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
+    parser.add_argument('--combine_fasta', help='Enable (True) or Disable (False) the FASTA append mode (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--shell', help='Use shell in Python system calls, NOT RECOMMENDED (default: Disabled)', dest='shell', action='store_true')
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
@@ -209,9 +221,11 @@ def convert_combine_fastqs(input_fastqs, output_path):
                         outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
 
+
 def gotta_split(input_fastqs, r1_input, r2_input, output_path):
     gotta_split_cmd = ['gotta_split -i', r1_input, r2_input, input_fastqs, output_path]
     logging.info(run_command(gotta_split_cmd, shell=shell))
+
 
 def main():
     # gcc -m64 -O3 ninja_shi7.c -o ninja_shi7
@@ -220,7 +234,6 @@ def main():
 
     parser = make_arg_parser()
     args = parser.parse_args()
-
 
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
     if not os.path.exists(args.input):
@@ -258,6 +271,13 @@ def main():
         os.makedirs(os.path.join(args.output, 'temp'))
     else:
         os.makedirs(os.path.join(args.output, 'temp'))
+
+    # TODO: Automatic stiching checking
+    # TODO: Automatic adapter checking
+    # What do you ask yourself when you run QC? Build it in. Use
+    # TODO: Redo into a pipeline format for explicit command building i.e.
+    # pipeline = make_pipeline([detect_flash_params, flash, detect_adaptors, axe_adaptors, ...])
+    # run(pipeline)
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # GOTTA_SPLIT
