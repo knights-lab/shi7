@@ -6,7 +6,7 @@ import platform
 __author__ = "Knights Lab"
 __copyright__ = "Copyright (c) 2016--, %s" % __author__
 __credits__ = ["Kaiwei Ang", "Gabe Al-Ghalith", "Benjamin Hillmann"]
-__email__ = "hillmannben@gmail.com"
+#__email__ = "hillmannben@gmail.com"
 __license__ = "MIT"
 __maintainer__ = "Kaiwei Ang"
 __version__ = "0.0.1-dev"
@@ -14,9 +14,9 @@ __version__ = "0.0.1-dev"
 long_description = 'All of your shi7 is one place. From quality scores to mappable reads.'
 
 if platform.system() == 'Darwin':
-    print('Darwin found!')
+    __email__ = "kaiweiang"
 else:
-    print('Darwin not found!')
+    __email__ = "hillmannben"
 
 setup(
     name='shi7en',
