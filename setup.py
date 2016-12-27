@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 from glob import glob
 import os
@@ -16,9 +14,9 @@ __version__ = "0.0.1-dev"
 long_description = 'All of your shi7 is one place. From quality scores to mappable reads.'
 
 if platform.system() == 'Darwin':
-    bin_path = 'bin/shi7en_trim_mac'.decode("utf-8")
+    bin_path = 'bin/shi7en_trim_mac'.encode(encoding='UTF-8',errors='strict')
 else:
-    bin_path = 'bin/shi7en_trim_linux'.decode("utf-8")
+    bin_path = 'bin/shi7en_trim_linux'.encode(encoding='UTF-8',errors='strict')
 
 setup(
     name='shi7en',
