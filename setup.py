@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 from glob import glob
 import os
+import platform
 
 __author__ = "Knights Lab"
 __copyright__ = "Copyright (c) 2016--, %s" % __author__
@@ -18,6 +19,10 @@ setup(
     packages=find_packages(),
     package_data = {'shi7en': ['adapters/*.fa']},
     url='',
+    if platform.system() == 'Darwin':
+        print('Darwin found!')
+    else:
+        print('Darwin not found!')
     license=__license__,
     author=__author__,
     author_email=__email__,
