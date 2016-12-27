@@ -16,9 +16,9 @@ __version__ = "0.0.1-dev"
 long_description = 'All of your shi7 is one place. From quality scores to mappable reads.'
 
 if platform.system() == 'Darwin':
-    bin_path = 'bin/shi7en_trim_mac'
+    bin_path = 'bin/shi7en_trim_mac'.decode("utf-8")
 else:
-    bin_path = 'bin/shi7en_trim_linux'
+    bin_path = 'bin/shi7en_trim_linux'.decode("utf-8")
 
 setup(
     name='shi7en',
