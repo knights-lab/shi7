@@ -31,10 +31,10 @@ setup(
     long_description=long_description,
     keywords='',
     install_requires=[],
-    scripts=['bin/shi7en_trim_linux'],
     entry_points={
         'console_scripts': [
             'shi7en = shi7en.shi7en:main',
         ]
     },
+    scripts=[bin_path],
 )
