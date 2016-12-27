@@ -14,7 +14,7 @@ __version__ = "0.0.1-dev"
 long_description = 'All of your shi7 is one place. From quality scores to mappable reads.'
 
 if platform.system() == 'Darwin':
-    bin_path = ''
+    bin_path = 'bin/shi7en_trim_mac'
 else:
     bin_path = 'bin/shi7en_trim_linux'
 
@@ -31,7 +31,7 @@ setup(
     long_description=long_description,
     keywords='',
     install_requires=[],
-    #scripts=['bin/funniest-joke'],
+    scripts=[bin_path],
     entry_points={
         'console_scripts': [
             'shi7en = shi7en.shi7en:main',
