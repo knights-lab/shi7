@@ -36,5 +36,5 @@ setup(
             'shi7en = shi7en.shi7en:main',
         ]
     },
-    scripts=[bin_path],
+    scripts=[bin_path.decode('UTF-8')],
 )
