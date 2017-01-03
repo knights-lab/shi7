@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+                                                                                                                                                      #!/usr/bin/env python
 from __future__ import print_function, division
 import argparse
 import subprocess
@@ -35,6 +35,7 @@ def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
                                      usage='shi7en -i <input> -o <output> -t_trim <threads>...')
     parser.add_argument('--gotta_split', help='Split one giant fastq (well, one pair -- an R1 and R2) into samples', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
+    parser.add_argument('--gotta_split_output', help='output directory of the splitted fastqs')
     parser.add_argument('--r1', help='r1 to split')
     parser.add_argument('--r2', help='r2 to split')
     parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
@@ -222,8 +223,8 @@ def convert_combine_fastqs(input_fastqs, output_path):
     return [output_filename]
 
 
-def gotta_split(input_fastqs, r1_input, r2_input, output_path):
-    gotta_split_cmd = ['gotta_split -i', r1_input, r2_input, input_fastqs, output_path]
+def gotta_split(r1_input, r2_input, input_fastqs, output_path):
+    gotta_split_cmd = ['gotta_split', r1_input, r2_input, input_fastqs, output_path]
     logging.info(run_command(gotta_split_cmd, shell=shell))
 
 
@@ -252,12 +253,13 @@ def main():
             raise ValueError('Error: argument -r1 is required for split!')
         elif not args.r2:
             raise ValueError('Error: argument -r2 is required for split!')
-
-    if args.split:
         if not os.path.exists(args.r1):
             raise ValueError('Error: r1 directory %s doesn\'t exist!' % args.r1)
         if not os.path.exists(args.r2):
             raise ValueError('Error: r1 directory %s doesn\'t exist!' % args.r2)
+        if args.gotta_split_output:
+            if not os.path.exists(args.gotta_split_output):
+                raise ValueError('Error: Gotta_split output directory %s doesn\'t exist!' % args.gotta_split_output)
 
     # Put in the logging file
     logging.basicConfig(filename=os.path.join(args.output, 'shi7en.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -283,8 +285,12 @@ def main():
     # GOTTA_SPLIT
 
     if args.split:
-        splitted_output = os.path.join(os.path.dirname(args.input), 'splitted fastqs') #the args.input here is the oligos path
-        gotta_split(args.input, args.r1, args.r2, splitted_output)
+        if args.gotta_split_output:
+            splitted_output = args.gotta_split_output
+        else:
+            splitted_output = os.path.join(os.path.dirname(args.input), 'splitted fastqs') #the args.input here is the oligos path
+
+        gotta_split(args.r1, args.r2, args.input, splitted_output)
         args.input = splitted_output
         logging.info('Gotta Split done!')
 
