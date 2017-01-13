@@ -13,7 +13,7 @@ def download_txt_url(path_to_file, url):
                 outfile.write(chunk)
 
 
-if _platform == "linux" or _platform == "linux2" or _platform == "darwin":
+if _platform == "linux" or _platform == "linux2":
 	bin_shi7en = 'ninja_shi7_linux'
 	bin_split = 'gotta_split_s_linux'
 elif _platform == "darwin":
