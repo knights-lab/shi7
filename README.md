@@ -18,9 +18,6 @@ source activate shi7en
 With the shogun environment activated, install the developmental SHI7EN toolchain.
 
 ```
-# Put condas and pip setuptools in sync
-pip install -I --upgrade setuptools
-
 # If you want to use flash
 conda install -c bioconda flash
 
