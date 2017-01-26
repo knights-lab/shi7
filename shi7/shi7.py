@@ -1,4 +1,4 @@
-                                                                                                                                                      #!/usr/bin/env python
+#!/usr/bin/env python
 from __future__ import print_function, division
 import argparse
 import subprocess
@@ -29,36 +29,38 @@ t_f_values = {"True": True,
 def convert_t_or_f(value):
     return t_f_values[value]
 
-
+STRIP = "False"
 def make_arg_parser():
     # TODO: Preset modes will get precedence over default values, but lose to explicit settings from user
-    parser = argparse.ArgumentParser(description='This is the commandline interface for shi7en',
-                                     usage='shi7en -i <input> -o <output> -t_trim <threads>...')
-    parser.add_argument('--gotta_split', help='Split one giant fastq (well, one pair -- an R1 and R2) into samples', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
-    parser.add_argument('--gotta_split_output', help='output directory of the splitted fastqs')
-    parser.add_argument('--r1', help='r1 to split')
-    parser.add_argument('--r2', help='r2 to split')
-    parser.add_argument('--debug', help='Enable debug (default: Disabled)', dest='debug', action='store_true')
-    parser.add_argument('--adaptor', help='Set the type of the adaptor (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
+    parser = argparse.ArgumentParser(description='This is the commandline interface for shi7',
+                                     usage='shi7 -i <input> -o <output> ...')
+    parser.add_argument('--gotta_split', help='Split one giant fastq (or one pair of R1/R2) into 1 fastq per sample', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
+    parser.add_argument('--gotta_split_output', help='output directory for the newly-split fastqs')
+    parser.add_argument('--gotta_split_r1', help='r1 to split')
+    parser.add_argument('--gotta_split_r2', help='r2 to split')
+    parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
+    parser.add_argument('--adaptor', help='Set the type of the adaptors to remove (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stitching (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--convert_fasta', help='Enable (True) or Disable (False) the conversion of FASTQS to FASTA (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--combine_fasta', help='Enable (True) or Disable (False) the FASTA append mode (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
-    parser.add_argument('--shell', help='Use shell in Python system calls, NOT RECOMMENDED (default: Disabled)', dest='shell', action='store_true')
+    #parser.add_argument('--shell', help='Use shell in Python system calls, NOT RECOMMENDED (default: Disabled)', dest='shell', action='store_true')
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
                         default=min(multiprocessing.cpu_count(),16))
+    parser.add_argument('-s', '--strip_underscore', help='Prune sample names after the first underscore (default: %(default)s)',default="False")
     # TODO: Table of presets for different variable regions
     parser.add_argument('-m', '--min_overlap',
                         help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
     parser.add_argument('-M', '--max_overlap',
                         help='Set the maximum overlap length between two reads. If V4 set to 300 (default: %(default)s)', default=700, type=int)
     # TODO: The read lengths should be cut in half when you are in SE mode
-    parser.add_argument('-filter_l', '--filter_length', help='Set the filter length (default: %(default)s)', default=80, type=int)
-    parser.add_argument('-trim_q', '--trim_qual', help='Set the trim qual (default: %(default)s)', default=20, type=int)
+    parser.add_argument('-filter_l', '--filter_length', help='Set the length of reads to retain (default: %(default)s)', default=80, type=int)
+    parser.add_argument('-filter_q', '--filter_qual', help='Set the avg quality of the reads to retain (default: %(default)s)', default=30, type=int)
+    parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=20, type=int)
     parser.set_defaults(shell=False, single_end=False)
 
     return parser
@@ -90,8 +92,10 @@ def run_command(cmd, shell=False):
 
 
 def format_basename(filename):
-    return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(filename)))).split('.')[:-1])
-
+    if t_f_values[STRIP]:
+        return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', (os.path.basename(filename)).split('_')[0]))).split('.')[:-1])
+    else:
+        return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(filename)))).split('.')[:-1])
 
 def whitelist(dir, whitelist):
     for root, subdirs, files in os.walk(dir):
@@ -158,6 +162,7 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     output_filenames = []
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
+        #print("I'm looking at: " + format_basename(input_path_R1) + '.fastq' + " from: " + input_path_R1)
         output_path_R1 = os.path.join(output_path, format_basename(input_path_R1) + '.fastq')
         unpaired_R1 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
         output_path_R2 = os.path.join(output_path, format_basename(input_path_R2) + '.fastq')
@@ -187,13 +192,13 @@ def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, thr
     return output_filenames
 
 
-def trimmer(input_fastqs, output_path, filter_length, trim_qual, threads=1, shell=False):
+def trimmer(input_fastqs, output_path, filter_length, trim_qual, filter_qual, threads=1, shell=False):
     [logging.info(filename) for filename in input_fastqs]
     output_filenames = []
     for path_input_fastq in input_fastqs:
         path_output_fastq = os.path.join(output_path, format_basename(path_input_fastq) + '.fastq')
-        shi7en_cmd = ['shi7en_trimmer', path_input_fastq, path_output_fastq, filter_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', 30]
-        logging.info(run_command(shi7en_cmd, shell=shell))
+        shi7_cmd = ['shi7_trimmer', path_input_fastq, path_output_fastq, filter_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', filter_qual]
+        logging.info(run_command(shi7_cmd, shell=shell))
         output_filenames.append(path_output_fastq)
     return output_filenames
 
@@ -235,6 +240,8 @@ def main():
 
     parser = make_arg_parser()
     args = parser.parse_args()
+    global STRIP
+    STRIP = args.strip_underscore
 
     # FIRST CHECK IF THE INPUT AND OUTPUT PATH EXIST. IF DO NOT, RAISE EXCEPTION AND EXIT
     if not os.path.exists(args.input):
@@ -262,7 +269,7 @@ def main():
                 raise ValueError('Error: Gotta_split output directory %s doesn\'t exist!' % args.gotta_split_output)
 
     # Put in the logging file
-    logging.basicConfig(filename=os.path.join(args.output, 'shi7en.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(filename=os.path.join(args.output, 'shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     if args.debug:
         logging.info('Debug Mode is Enabled. Retaining intermediate files.')
@@ -290,7 +297,7 @@ def main():
         else:
             splitted_output = os.path.join(os.path.dirname(args.input), 'splitted fastqs') #the args.input here is the oligos path
 
-        gotta_split(args.r1, args.r2, args.input, splitted_output)
+        gotta_split(args.gotta_split_r1, args.gotta_split_r2, args.input, splitted_output)
         args.input = splitted_output
         logging.info('Gotta Split done!')
 
@@ -325,12 +332,12 @@ def main():
             logging.warning('Single End mode enabled with FLASH. Skipping this step.')
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # SHI7EN
+    # shi7
 
     if args.trim:
         trimmer_output = os.path.join(args.output, 'temp', 'trimmer')
         os.makedirs(trimmer_output)
-        path_fastqs = trimmer(path_fastqs, trimmer_output, args.filter_length, args.trim_qual, threads=args.threads, shell=args.shell)
+        path_fastqs = trimmer(path_fastqs, trimmer_output, args.filter_length, args.trim_qual, args.filter_qual, threads=args.threads, shell=args.shell)
         if not args.debug:
             whitelist(os.path.join(args.output, 'temp'), path_fastqs)
         logging.info('CREATE_TRIMMER_GENERAL done!')
@@ -341,13 +348,14 @@ def main():
     if args.convert_fasta:
         convert_output = os.path.join(args.output, 'temp', 'convert')
         os.makedirs(convert_output)
-        if args.combine_fasta:
+        if not args.debug and args.combine_fasta:
             path_fastqs = convert_combine_fastqs(path_fastqs, convert_output)
-            logging.info('Convert FASTQs to FASTAs done!')
-            logging.info('Combine FASTAs done!')
+        elif args.combine_fasta:
+            convert_fastqs(path_fastqs, convert_output)
+            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output)
         else:
             path_fastqs = convert_fastqs(path_fastqs, convert_output)
-            logging.info('Convert FASTQs to FASTAs done!')
+        logging.info('Convert ' + ('and combine ' if args.combine_fasta else '') + 'FASTQs done!')
 
     for file in path_fastqs:
         dest = os.path.join(args.output, os.path.basename(file))
