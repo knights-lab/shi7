@@ -33,7 +33,7 @@ STRIP = "False"
 def make_arg_parser():
     # TODO: Preset modes will get precedence over default values, but lose to explicit settings from user
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7',
-                                     usage='shi7 -i <input> -o <output> ...')
+                                     usage='shi7 v0.91 -i <input> -o <output> ...')
     parser.add_argument('--gotta_split', help='Split one giant fastq (or one pair of R1/R2) into 1 fastq per sample', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
     parser.add_argument('--gotta_split_output', help='output directory for the newly-split fastqs')
     parser.add_argument('--gotta_split_r1', help='r1 to split')
@@ -93,9 +93,21 @@ def run_command(cmd, shell=False):
 
 def format_basename(filename):
     if t_f_values[STRIP]:
-        return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', (os.path.basename(filename)).split('_')[0]))).split('.')[:-1])
+        parts = os.path.basename(filename).split('_')
+        if len(parts) == 1:
+            return re.sub('[^0-9a-zA-Z]+', '.', '.'.join(parts[0].split('.')[:-1]))
+        else:
+            appendage = ''
+            for section in parts[1:]:
+                if section.find("R1") != -1:
+                    appendage = 'R1'
+                elif section.find("R2") != -1:
+                    appendage = 'R2'
+            return re.sub('[^0-9a-zA-Z]+', '.', parts[0])+appendage
     else:
-        return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(filename)))).split('.')[:-1])
+        return re.sub('[^0-9a-zA-Z]+', '.', '.'.join(os.path.basename(filename).split('.')[:-1]))
+
+#return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(filename)))).split('.')[:-1])
 
 def whitelist(dir, whitelist):
     for root, subdirs, files in os.walk(dir):
