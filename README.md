@@ -1,4 +1,26 @@
+# Prerequisites
+1. Python 2.7+
+2. Java
+
 # Installation
+New way (Linux): grab the latest release, extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
+
+# Usage examples:
+Assuming you have a bunch of fastq files, of forward and reverse reads, split up by sample, that have Nextera adaptors: 
+`shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera`
+
+Assuming you only have R1 reads (no paried end)
+`shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera -SE`
+
+If you have V4 16S metagenomic reads, you can get fancier:
+`-m 285 -M 300`
+
+This sets the minimum read length to 285 and the maximum to 300 when stitching, which is the canonical HMP V4 16S primer coverage region. This can be a powerful QC step in and of itself. 
+
+If you have shotgun sequences, you might not want to try stitching (we recommend trying first and seeing how many stitch):
+`--flash False`
+
+# Installation (old way)
 
 These installation instructions are streamlined for Linux. The tool SHI7EN is installable on OSX/Windows with a few minor tweaks to this tutorial. This package requires anaconda, which is a system agnostic package and virtual environment manager. Follow the installation instructions for your system at <http://conda.pydata.org/miniconda.html>.
 
