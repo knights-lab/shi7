@@ -1,4 +1,10 @@
-Copyright (c) 2016, GabeAl
+Copyright (c) 2016, KnightsLab
+Individual software components are subject to their own licenses, and
+these supercede the terms of this license where appropriate. 
+
+Trimmomatic: GPLv3, FLASH: GPLv3
+GPLv3 license: https://github.com/timflutre/trimmomatic/blob/master/distSrc/LICENSE
+
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
