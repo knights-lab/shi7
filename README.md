@@ -12,7 +12,7 @@ echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
 . ~/.bashrc
 ```
 
-## Usage examples:
+# Usage examples:
 Assuming you have a bunch of fastq files, of forward and reverse reads, split up by sample, that have Nextera adaptors: 
 
 `shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera`
