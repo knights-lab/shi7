@@ -3,7 +3,14 @@
 2. Java
 
 # Installation
-New way (Linux): grab the latest release, extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
+New way (Linux and Mac): grab the latest [release](https://github.com/knights-lab/shi7en/releases), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
+
+How to add to PATH? Well, like this:
+
+```
+echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
+. ~/.bashrc
+```
 
 # Usage examples:
 Assuming you have a bunch of fastq files, of forward and reverse reads, split up by sample, that have Nextera adaptors: 
