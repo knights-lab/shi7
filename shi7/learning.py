@@ -56,12 +56,14 @@ def check_sequence_name(path):
     return ids #why the output has size of 1497
 '''
 
+
 def detect_paired_end(path_fastqs):
     if len(path_fastqs) % 2 == 1:
         return False
     path_fastqs = sorted(path_fastqs)
     path_R1_fastqs, path_R2_fastqs = path_fastqs[::2], path_fastqs[1::2]
-
+    if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
+        return False
     R1_lines_num = []
     R2_lines_num = []
     R1_files_size = []
@@ -77,11 +79,8 @@ def detect_paired_end(path_fastqs):
         R2_files_size.append(get_file_size(path_R2_fastq))
         #R2_seqs_name.append(check_sequence_name(path_R2_fastq,'2'))
 
-    print(R1_seqs_name)
-    print(R2_seqs_name)
     if not R1_lines_num == R2_lines_num or not R1_files_size == R2_files_size: #or not R1_seqs_name == R2_seqs_name:
         return False
 
     return True
-
 
