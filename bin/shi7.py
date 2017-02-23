@@ -233,13 +233,13 @@ def convert_fastqs(input_fastqs, output_path):
 
 def convert_combine_fastqs(input_fastqs, output_path):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
-    with open(output_filename, 'bw') as outf_fasta:
+    with open(output_filename, 'w') as outf_fasta:
         for path_input_fastq in input_fastqs:
                 basename = format_basename(path_input_fastq)
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
-                        outf_fasta.write(b'>%s_%i %s\n%s\n' % (basename, i, title, seq))
+                        outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
 
 
