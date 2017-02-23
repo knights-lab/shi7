@@ -120,22 +120,25 @@ def whitelist(dir, whitelist):
 
 
 def read_fastq(fh):
-    line = next(fh)
-    while line:
-        title = line[1:].strip()
-        data = ''
-        qualities = ''
-        flag = True
-        line = next(fh)
-        while line and (flag or len(data) != len(qualities)):
-            if line[0] == '+':
-                flag = False
-            elif flag:
-                data += line.strip()
-            else:
-                qualities += line.strip()
-            line = next(fh)
-        yield title, data, qualities
+    qual_flag = False
+    data = ''
+    title = next(fh)[1:].strip()
+    qualities = ''
+    for line in fh:
+        line = line.strip()
+        if len(data) == len(qualities) and qual_flag:
+            yield title, data, qualities
+            qual_flag = False
+            title = line[1:]
+            data = ''
+            qualities = ''
+        elif qual_flag:
+            qualities += line
+        elif len(line) == 1 and line[0] == '+':
+            qual_flag = True
+        else:
+            data += line
+    yield title, data, qualities
 
 
 def split_fwd_rev(paths):
