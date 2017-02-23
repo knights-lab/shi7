@@ -120,26 +120,23 @@ def whitelist(dir, whitelist):
 
 
 def read_fastq(fh):
-    qual_flag = False
-    data = ''
-    title = next(fh)[1:].strip()
-    qualities = ''
-    for line in fh:
-        line = line.strip()
-        if len(data) == len(qualities) and qual_flag:
-            yield title, data, qualities
-            qual_flag = False
-            title = line[1:]
-            data = ''
-            qualities = ''
-        elif qual_flag:
-            qualities += line
-        elif len(line) == 1 and line[0] == '+':
-            qual_flag = True
-        else:
-            data += line
-    yield title, data, qualities
-
+    # Assume linear FASTQS
+    while True:
+        title = next(fh)
+        while title[0] != '@':
+            title = next(fh)
+        # Record begins
+        if title[0] != '@':
+            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+        title = title[1:].strip()
+        sequence = next(fh).strip()
+        garbage = next(fh).strip()
+        if garbage[0] != '+':
+            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+        qualities = next(fh).strip()
+        if len(qualities) != len(sequence):
+            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+        yield title, sequence, qualities
 
 def split_fwd_rev(paths):
     paths = sorted(paths)
