@@ -11,7 +11,7 @@ from datetime import datetime
 
 import logging
 
-t_f_values = {"True": True,
+TRUE_FALSE_DICT = {"True": True,
               "False": False,
               "true": True,
               "false": False,
@@ -27,9 +27,11 @@ t_f_values = {"True": True,
 
 
 def convert_t_or_f(value):
-    return t_f_values[value]
+    return TRUE_FALSE_DICT[value]
 
 STRIP = "False"
+
+
 def make_arg_parser():
     # TODO: Preset modes will get precedence over default values, but lose to explicit settings from user
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7',
@@ -92,7 +94,7 @@ def run_command(cmd, shell=False):
 
 
 def format_basename(filename):
-    if t_f_values[STRIP]:
+    if TRUE_FALSE_DICT[STRIP]:
         parts = os.path.basename(filename).split('_')
         if len(parts) == 1:
             return re.sub('[^0-9a-zA-Z]+', '.', '.'.join(parts[0].split('.')[:-1]))
@@ -109,6 +111,7 @@ def format_basename(filename):
 
 #return '.'.join(re.sub('[^0-9a-zA-Z]+', '.', re.sub('_L001', '', re.sub('_001', '', os.path.basename(filename)))).split('.')[:-1])
 
+
 def whitelist(dir, whitelist):
     for root, subdirs, files in os.walk(dir):
             for file in files:
@@ -117,23 +120,23 @@ def whitelist(dir, whitelist):
 
 
 def read_fastq(fh):
-    line = next(fh)
-    while line:
-        title = line[1:].strip()
-        data = ''
-        qualities = ''
-        flag = True
-        line = next(fh)
-        while line and (flag or len(data) != len(qualities)):
-            if line[0] == '+':
-                flag = False
-            elif flag:
-                data += line.strip()
-            else:
-                qualities += line.strip()
-            line = next(fh)
-        yield title, data, qualities
-
+    # Assume linear FASTQS
+    while True:
+        title = next(fh)
+        while title[0] != '@':
+            title = next(fh)
+        # Record begins
+        if title[0] != '@':
+            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+        title = title[1:].strip()
+        sequence = next(fh).strip()
+        garbage = next(fh).strip()
+        if garbage[0] != '+':
+            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+        qualities = next(fh).strip()
+        if len(qualities) != len(sequence):
+            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+        yield title, sequence, qualities
 
 def split_fwd_rev(paths):
     paths = sorted(paths)
@@ -218,7 +221,7 @@ def trimmer(input_fastqs, output_path, filter_length, trim_qual, filter_qual, th
 def convert_fastqs(input_fastqs, output_path):
     output_filenames = []
     for path_input_fastq in input_fastqs:
-        with open(path_input_fastq) as inf_fastq:
+        with open(path_input_fastq, 'r') as inf_fastq:
             gen_fastq = read_fastq(inf_fastq)
             output_filename = os.path.join(output_path, format_basename(path_input_fastq) + '.fna')
             with open(output_filename, 'w') as outf_fasta:
@@ -230,19 +233,19 @@ def convert_fastqs(input_fastqs, output_path):
 
 def convert_combine_fastqs(input_fastqs, output_path):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
-    with open(output_filename, 'w') as outf_fasta:
+    with open(output_filename, 'bw') as outf_fasta:
         for path_input_fastq in input_fastqs:
                 basename = format_basename(path_input_fastq)
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
-                        outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+                        outf_fasta.write(b'>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
 
 
 def gotta_split(r1_input, r2_input, input_fastqs, output_path):
     gotta_split_cmd = ['gotta_split', r1_input, r2_input, input_fastqs, output_path]
-    logging.info(run_command(gotta_split_cmd, shell=shell))
+    logging.info(run_command(gotta_split_cmd))
 
 
 def main():
