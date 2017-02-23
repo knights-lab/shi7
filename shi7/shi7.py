@@ -138,6 +138,7 @@ def read_fastq(fh):
             raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
         yield title, sequence, qualities
 
+
 def split_fwd_rev(paths):
     paths = sorted(paths)
     # Split by even odd index
