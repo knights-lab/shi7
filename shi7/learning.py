@@ -27,13 +27,19 @@ def get_seq_length_qual_scores(path_fastqs, num_files=10, num_sequences=1000):
     for fastq_gen in subsampled_fastqs:
         for header, sequence, quality in fastq_gen:
             # TODO: Write the subsampled fastqs
-            # sequences.append(sequences)
-            # qualities.append(qualities)
+            sequences.append(sequences)
+            qualities.append(qualities)
             sequence_len_sum += len(sequence)
             quality_sum += sum([ord(i) for i in quality])
             num_sequences += 1.
     # Return (average length of sequences, average quality score)
-    return sequence_len_sum/num_sequences, quality_sum/sequence_len_sum
+    return sequence_len_sum/num_sequences, quality_sum/sequence_len_sum, sequences, qualities
+
+# def get_all_fastq_seqs_qual(path_fastqs):
+#     for i, path_fastq in enumerate(path_fastqs):
+#         with open(path_fastq) as fastq_inf:
+#             fastq_gen = read_fastq(fastq_inf)
+#             yield next(fastq_gen)
 
 
 def count_num_lines(path):
@@ -44,20 +50,25 @@ def count_num_lines(path):
 def get_file_size(path):
     return os.path.getsize(path)
 
-'''
-def check_sequence_name(path):
-    ids = []
-    with open(path) as path_inf:
-        fastq_gen = read_fastq(path_inf)
-        for gen in fastq_gen:
-            for header in gen: #why not header, sequence, quality?
-                ids.append(header[-9])
 
-    return ids #why the output has size of 1497
-'''
+def check_sequence_name(path_R1, path_R2):
+    with open(path_R1) as path_inf_R1, open(path_R2) as path_inf_R2:
+        fastq_gen_R1 = read_fastq(path_inf_R1)
+        fastq_gen_R2 = read_fastq(path_inf_R2)
+        for gen_R1, gen_R2 in zip(fastq_gen_R1,fastq_gen_R2):
+            title_R1, title_R2 = gen_R1[0], gen_R2[0]
+            if len(title_R1) != len(title_R2):
+                return False
+            diff_idx = [i for i in range(len(title_R1)) if title_R1[i] != title_R2[i]]
+            if len(diff_idx) != 1:
+                return False
+            if int(title_R2[diff_idx[0]]) - int(title_R1[diff_idx[0]]) != 1:
+                return False
+    return True
 
 
 def detect_paired_end(path_fastqs):
+    path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq')]
     if len(path_fastqs) % 2 == 1:
         return False
     path_fastqs = sorted(path_fastqs)
@@ -68,19 +79,22 @@ def detect_paired_end(path_fastqs):
     R2_lines_num = []
     R1_files_size = []
     R2_files_size = []
-    R1_seqs_name = []
-    R2_seqs_name = []
+    seqs_name = []
     for path_R1_fastq in path_R1_fastqs:
         R1_lines_num.append(count_num_lines(path_R1_fastq))
         R1_files_size.append(get_file_size(path_R1_fastq))
-        #R1_seqs_name.append(check_sequence_name(path_R1_fastq,'1'))
     for path_R2_fastq in path_R2_fastqs:
         R2_lines_num.append(count_num_lines(path_R2_fastq))
         R2_files_size.append(get_file_size(path_R2_fastq))
-        #R2_seqs_name.append(check_sequence_name(path_R2_fastq,'2'))
-
-    if not R1_lines_num == R2_lines_num or not R1_files_size == R2_files_size: #or not R1_seqs_name == R2_seqs_name:
+    for path_R1_fastq, path_R2_fastq in zip(path_R1_fastqs,path_R2_fastqs):
+        seqs_name.append(check_sequence_name(path_R1_fastq, path_R2_fastq))
+    if not R1_lines_num == R2_lines_num or not R1_files_size == R2_files_size or False in seqs_name:
         return False
-
     return True
 
+
+# def choose_axe_adaptors(path_fastqs):
+#     #assume we already have the directory that contains subsample fastqs
+#     if detect_paired_end(path_fastqs):
+#         for adaptors in ['Nextera', 'TruSeq2', 'TruSeq3', 'TruSeq3-2']:
+#             axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shell=False):
