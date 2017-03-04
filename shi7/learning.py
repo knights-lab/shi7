@@ -86,7 +86,7 @@ def detect_paired_end(path_fastqs):
     for path_R2_fastq in path_R2_fastqs:
         R2_lines_num.append(count_num_lines(path_R2_fastq))
         R2_files_size.append(get_file_size(path_R2_fastq))
-    for path_R1_fastq, path_R2_fastq in zip(path_R1_fastqs,path_R2_fastqs):
+    for path_R1_fastq, path_R2_fastq in zip(path_R1_fastqs, path_R2_fastqs):
         seqs_name.append(check_sequence_name(path_R1_fastq, path_R2_fastq))
     if not R1_lines_num == R2_lines_num or not R1_files_size == R2_files_size or False in seqs_name:
         return False
