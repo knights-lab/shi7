@@ -93,8 +93,38 @@ def detect_paired_end(path_fastqs):
     return True
 
 
-# def choose_axe_adaptors(path_fastqs):
-#     #assume we already have the directory that contains subsample fastqs
-#     if detect_paired_end(path_fastqs):
-#         for adaptors in ['Nextera', 'TruSeq2', 'TruSeq3', 'TruSeq3-2']:
-#             axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shell=False):
+def get_directory_size(path):
+    total_size = 0
+    for fastq in os.listdir(path):
+        total_size += get_file_size(os.path.join(path, fastq))
+    return total_size
+
+'''
+def choose_axe_adaptors(path_subsampled_fastqs):
+    # assume we already have the directory that contains subsample fastqs
+    adapters = ['Nextera', 'TruSeq2', 'TruSeq3', 'TruSeq3-2']
+    threads = min(multiprocessing.cpu_count(),16)
+    original_size = get_directory_size(path_subsampled_fastqs)
+    best_size = original_size
+    best_adap = None
+
+    if detect_paired_end(path_fastqs):
+        for adapter in adapters:
+            fastqs_path = axe_adaptors_paired_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
+            fastqs_path_size = get_directory_size(fastqs_path)
+            if fastqs_path_size < best_size:
+                best_size = fastqs_path_size
+                best_adap = adapter
+    else:
+        for adapter in adapters:
+            fastqs_path = axe_adaptors_single_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
+            fastqs_path_size = get_directory_size(fastqs_path)
+            if fastqs_path_size < best_size:
+                best_size = fastqs_path_size
+                best_adap = adapter
+
+    if best_size < 0.995*original_size:
+        return best_adap, best_size
+    else:
+        return None, original_size
+'''
