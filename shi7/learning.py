@@ -22,8 +22,6 @@ def get_seq_length_qual_scores(path_fastqs, output_path, num_files=10, num_seque
     sequence_len_sum = 0.
     quality_sum = 0
     num_sequences = 0.
-    # TODO: Write the subsampled fastqs
-
 
     # sequences = []
     # qualities = []
