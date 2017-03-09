@@ -2,6 +2,7 @@
 from shi7 import read_fastq
 import os
 
+
 def subsample_fastqs(path_fastqs, num_files=10, num_sequences=100):
     for i, path_fastq in enumerate(path_fastqs):
         with open(path_fastq) as fastq_inf:
@@ -16,24 +17,27 @@ def limit_fastq(fastq_gen, num_sequences=100):
         yield next(fastq_gen)
 
 
-def get_seq_length_qual_scores(path_fastqs, num_files=10, num_sequences=1000):
+def get_seq_length_qual_scores(path_fastqs, output_path, num_files=10, num_sequences=1000):
     subsampled_fastqs = subsample_fastqs(path_fastqs, num_files=num_files, num_sequences=num_sequences)
     sequence_len_sum = 0.
     quality_sum = 0
     num_sequences = 0.
     # TODO: Write the subsampled fastqs
+
+
     # sequences = []
     # qualities = []
-    for fastq_gen in subsampled_fastqs:
-        for header, sequence, quality in fastq_gen:
-            # TODO: Write the subsampled fastqs
-            sequences.append(sequences)
-            qualities.append(qualities)
-            sequence_len_sum += len(sequence)
-            quality_sum += sum([ord(i) for i in quality])
-            num_sequences += 1.
+    for fastq_path, fastq_gen in zip(path_fastqs, subsampled_fastqs):
+        with open(os.path.join(output_path, os.path.basename(fastq_path)), 'w') as outf:
+            for header, sequence, quality in fastq_gen:
+                outf.write("@%s\n%s\n+\n%s\n" % (header, sequence, quality))
+                # sequences.append(sequences)
+                # qualities.append(qualities)
+                sequence_len_sum += len(sequence)
+                quality_sum += sum([ord(i) for i in quality])
+                num_sequences += 1.
     # Return (average length of sequences, average quality score)
-    return sequence_len_sum/num_sequences, quality_sum/sequence_len_sum, sequences, qualities
+    return sequence_len_sum/num_sequences, quality_sum/sequence_len_sum
 
 # def get_all_fastq_seqs_qual(path_fastqs):
 #     for i, path_fastq in enumerate(path_fastqs):
