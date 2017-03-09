@@ -138,7 +138,6 @@ def read_fastq(fh):
             raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
         yield title, sequence, qualities
 
-
 def split_fwd_rev(paths):
     paths = sorted(paths)
     # Split by even odd index
@@ -240,7 +239,7 @@ def convert_combine_fastqs(input_fastqs, output_path):
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
-                        outf_fasta.write(b'>%s_%i %s\n%s\n' % (basename, i, title, seq))
+                        outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
 
 
