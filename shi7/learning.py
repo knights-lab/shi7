@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from shi7 import *
+from shi7.shi7 import *
 import multiprocessing
 import os
 
