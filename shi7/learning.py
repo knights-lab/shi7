@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from shi7 import read_fastq
+from shi7 import *
+import multiprocessing
 import os
 
 
@@ -70,7 +71,7 @@ def check_sequence_name(path_R1, path_R2):
 
 
 def detect_paired_end(path_fastqs):
-    path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq')]
+    #path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq')]
     if len(path_fastqs) % 2 == 1:
         return False
     path_fastqs = sorted(path_fastqs)
@@ -101,32 +102,45 @@ def get_directory_size(path):
         total_size += get_file_size(os.path.join(path, fastq))
     return total_size
 
-'''
-def choose_axe_adaptors(path_subsampled_fastqs):
+
+def remove_directory_contents(path):
+    for f in os.listdir(path):
+        os.remove(os.path.join(path, f))
+
+
+def choose_axe_adaptors(path_subsampled_fastqs, output_path):
     # assume we already have the directory that contains subsample fastqs
     adapters = ['Nextera', 'TruSeq2', 'TruSeq3', 'TruSeq3-2']
     threads = min(multiprocessing.cpu_count(),16)
-    original_size = get_directory_size(path_subsampled_fastqs)
+    print('directory name: ', os.path.dirname(path_subsampled_fastqs[0]))
+    original_size = get_directory_size(os.path.dirname(path_subsampled_fastqs[0]))
+    print('Original size = ', original_size)
     best_size = original_size
     best_adap = None
-
-    if detect_paired_end(path_fastqs):
+    print(path_subsampled_fastqs)
+    if detect_paired_end(path_subsampled_fastqs):
+        print("Entering paired end ...")
         for adapter in adapters:
-            fastqs_path = axe_adaptors_paired_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
-            fastqs_path_size = get_directory_size(fastqs_path)
+            axe_adaptors_paired_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
+            fastqs_path_size = get_directory_size(output_path)
+            print(adapter, fastqs_path_size)
             if fastqs_path_size < best_size:
                 best_size = fastqs_path_size
                 best_adap = adapter
+            remove_directory_contents(output_path)
     else:
+        print("Entering single end ...")
         for adapter in adapters:
-            fastqs_path = axe_adaptors_single_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
-            fastqs_path_size = get_directory_size(fastqs_path)
+            axe_adaptors_single_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
+            fastqs_path_size = get_directory_size(output_path)
+            print(adapter, fastqs_path_size)
             if fastqs_path_size < best_size:
                 best_size = fastqs_path_size
                 best_adap = adapter
+            remove_directory_contents(output_path)
 
     if best_size < 0.995*original_size:
         return best_adap, best_size
     else:
         return None, original_size
-'''
+
