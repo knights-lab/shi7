@@ -97,10 +97,7 @@ def detect_paired_end(path_fastqs):
 
 
 def get_directory_size(path):
-    total_size = 0
-    for fastq in os.listdir(path):
-        total_size += get_file_size(os.path.join(path, fastq))
-    return total_size
+    return sum([get_file_size(os.path.join(path, fastq)) for fastq in os.listdir(path)])
 
 
 def remove_directory_contents(path):
@@ -109,15 +106,12 @@ def remove_directory_contents(path):
 
 
 def choose_axe_adaptors(path_subsampled_fastqs, output_path):
-    # assume we already have the directory that contains subsample fastqs
     adapters = ['Nextera', 'TruSeq2', 'TruSeq3', 'TruSeq3-2']
     threads = min(multiprocessing.cpu_count(),16)
-    print('directory name: ', os.path.dirname(path_subsampled_fastqs[0]))
     original_size = get_directory_size(os.path.dirname(path_subsampled_fastqs[0]))
-    print('Original size = ', original_size)
+    print('Original size of the subsampled_fastqs = ', original_size)
     best_size = original_size
     best_adap = None
-    print(path_subsampled_fastqs)
     if detect_paired_end(path_subsampled_fastqs):
         print("Entering paired end ...")
         for adapter in adapters:
@@ -143,4 +137,5 @@ def choose_axe_adaptors(path_subsampled_fastqs, output_path):
         return best_adap, best_size
     else:
         return None, original_size
+
 
