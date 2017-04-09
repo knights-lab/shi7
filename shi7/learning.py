@@ -2,6 +2,7 @@
 from shi7.shi7 import *
 import multiprocessing
 import os
+import numpy as np
 
 
 def subsample_fastqs(path_fastqs, num_files=10, num_sequences=100):
@@ -138,4 +139,32 @@ def choose_axe_adaptors(path_subsampled_fastqs, output_path):
     else:
         return None, original_size
 
+
+def flash_is_stitchable(adapter_output_filenames, flash_output_path):
+    num_threads = min(multiprocessing.cpu_count(),16)
+    path_flash_fqs = flash(adapter_output_filenames, flash_output_path, max_overlap=700, min_overlap=20, allow_outies=True, threads=num_threads, shell=False)
+    path_R1_fastqs, _ = split_fwd_rev(adapter_output_filenames)
+    print('flash:', path_flash_fqs)
+    print('original:', path_R1_fastqs)
+    matched_count = 0
+    for original_fq, flash_fq in zip(path_R1_fastqs, path_flash_fqs):
+        print(count_num_lines(flash_fq), count_num_lines(original_fq))
+        if count_num_lines(flash_fq) > count_num_lines(original_fq)*0.3:
+            matched_count = matched_count + 1
+    return matched_count/len(path_flash_fqs) >= 0.75
+
+def flash_check_outies(flash_output_path):
+    pass
+
+
+def flash_check_cv(flash_output_path):
+    hist_files = [os.path.join(flash_output_path, f) for f in os.listdir(flash_output_path) if f.endswith('.hist')]
+    print(hist_files)
+    for f in hist_files:
+        freq_table = np.loadtxt(f)
+        all_nums = [[row[0]]*int(row[1]) for row in freq_table]
+        all_nums = sum(all_nums, [])
+        coeff_var = np.std(all_nums)/np.mean(all_nums)
+        print("CV =", coeff_var)
+    # incomplete
 
