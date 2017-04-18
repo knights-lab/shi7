@@ -319,7 +319,7 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # AXE_ADAPTORS
 
-    path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq')]
+    path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq') or f.endswith('fq')]
     # TODO: Filename to samplename map?
     logging.debug(path_fastqs)
 
