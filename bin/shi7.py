@@ -349,7 +349,6 @@ def main():
             os.makedirs(flash_output)
             flash_output_str = flash_part1(path_fastqs, flash_output, args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
             path_fastqs = flash_part2(flash_output_str, flash_output)
-            print(flash_output_str)
             if not args.debug:
                 whitelist(os.path.join(args.output, 'temp'), path_fastqs)
             logging.info('FLASH done!')
