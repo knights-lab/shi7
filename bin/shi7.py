@@ -189,15 +189,23 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
     return output_filenames
 
 
-def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
+def flash_part1(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
     # TODO: Can we run a two-pass approach?
     # TODO: Wiki table and hard code most common presets
+    flash_output_str = []
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
         flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', format_basename(re.sub('R1', '', input_path_R1)), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
-        logging.info(run_command(flash_cmd, shell=shell))
+        flash_output_str.append(run_command(flash_cmd, shell=shell))
+
+    return flash_output_str
+
+
+def flash_part2(flash_output, output_path):
+    for flash_out in flash_output:
+        logging.info(flash_out)
     output_filenames = []
     for f in os.listdir(output_path):
         if f.endswith('extendedFrags.fastq'):
@@ -339,7 +347,9 @@ def main():
         if not args.single_end:
             flash_output = os.path.join(args.output, 'temp', 'flash')
             os.makedirs(flash_output)
-            path_fastqs = flash(path_fastqs, flash_output, args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
+            flash_output_str = flash_part1(path_fastqs, flash_output, args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
+            path_fastqs = flash_part2(flash_output_str, flash_output)
+            print(flash_output_str)
             if not args.debug:
                 whitelist(os.path.join(args.output, 'temp'), path_fastqs)
             logging.info('FLASH done!')
