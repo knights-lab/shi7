@@ -41,7 +41,7 @@ def make_arg_parser():
     parser.add_argument('--gotta_split_r1', help='r1 to split')
     parser.add_argument('--gotta_split_r2', help='r2 to split')
     parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
-    parser.add_argument('--adaptor', help='Set the type of the adaptors to remove (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
+    parser.add_argument('--adaptor', help='Set the type of the adaptors to remove (default: None)', choices=['None', 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stitching (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
@@ -323,7 +323,7 @@ def main():
     # TODO: Filename to samplename map?
     logging.debug(path_fastqs)
 
-    if args.adaptor:
+    if args.adaptor and args.adaptor != str(None):
         axe_output = os.path.join(args.output, 'temp', 'axe')
         os.makedirs(axe_output)
         if args.single_end:
