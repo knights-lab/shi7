@@ -41,7 +41,7 @@ def make_arg_parser():
     parser.add_argument('--gotta_split_r1', help='r1 to split')
     parser.add_argument('--gotta_split_r2', help='r2 to split')
     parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
-    parser.add_argument('--adaptor', help='Set the type of the adaptors to remove (default: None)', choices=[None, 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
+    parser.add_argument('--adaptor', help='Set the type of the adaptors to remove (default: None)', choices=['None', 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stitching (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
@@ -189,15 +189,23 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
     return output_filenames
 
 
-def flash(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
+def flash_part1(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
     # TODO: Can we run a two-pass approach?
     # TODO: Wiki table and hard code most common presets
+    flash_output_str = []
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
         flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', format_basename(re.sub('R1', '', input_path_R1)), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
-        logging.info(run_command(flash_cmd, shell=shell))
+        flash_output_str.append(run_command(flash_cmd, shell=shell))
+
+    return flash_output_str
+
+
+def flash_part2(flash_output, output_path):
+    for flash_out in flash_output:
+        logging.info(flash_out)
     output_filenames = []
     for f in os.listdir(output_path):
         if f.endswith('extendedFrags.fastq'):
@@ -319,11 +327,11 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # AXE_ADAPTORS
 
-    path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq')]
+    path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq') or f.endswith('fq')]
     # TODO: Filename to samplename map?
     logging.debug(path_fastqs)
 
-    if args.adaptor:
+    if args.adaptor and args.adaptor != str(None):
         axe_output = os.path.join(args.output, 'temp', 'axe')
         os.makedirs(axe_output)
         if args.single_end:
@@ -339,7 +347,8 @@ def main():
         if not args.single_end:
             flash_output = os.path.join(args.output, 'temp', 'flash')
             os.makedirs(flash_output)
-            path_fastqs = flash(path_fastqs, flash_output, args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
+            flash_output_str = flash_part1(path_fastqs, flash_output, args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
+            path_fastqs = flash_part2(flash_output_str, flash_output)
             if not args.debug:
                 whitelist(os.path.join(args.output, 'temp'), path_fastqs)
             logging.info('FLASH done!')
