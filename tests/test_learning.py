@@ -38,25 +38,31 @@ def test_flash(adapter_output_filenames):
     if os.path.exists(flash_output_path):
         shutil.rmtree(flash_output_path)
     os.makedirs(flash_output_path)
-    is_stitchable = flash_is_stitchable(adapter_output_filenames, flash_output_path)
-    print(is_stitchable)
+    is_stitchable, allow_outies = flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_path)
+    print('is stitchable:',is_stitchable)
+    print('allow_outies:', allow_outies)
     if is_stitchable:
-        flash_check_cv(flash_output_path)
-    # incomplete
+        cv, cv_mean, cv_std = flash_check_cv(flash_output_path)
+    print('CV =', cv, 'Mean =', cv_mean, 'Std Dev =' , cv_std)
 
 
 if __name__ == '__main__':
     test_subsample()
     subsampled_fastqs = os.path.join("testfq", "temp", "subsampled_fastqs")
+
     if os.path.exists(subsampled_fastqs):
         shutil.rmtree(subsampled_fastqs)
+
     os.makedirs(subsampled_fastqs)
     best_adap = test_axe_adaptors(subsampled_fastqs) # This will also generate the subsampled fastqs
     path_subsampled_fastqs = [os.path.join(subsampled_fastqs, f) for f in os.listdir(subsampled_fastqs) if f.endswith('fastq')]
     adapter_output_path = os.path.join("testfq", "temp", "axe_adaptors")
+
     if os.path.exists(adapter_output_path):
         shutil.rmtree(adapter_output_path)
+
     os.makedirs(adapter_output_path)
+
     if best_adap:
         threads = min(multiprocessing.cpu_count(),16)
         adapter_output_filenames = axe_adaptors_paired_end(path_subsampled_fastqs, adapter_output_path, best_adap, threads, shell=False)
