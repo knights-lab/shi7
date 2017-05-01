@@ -150,7 +150,7 @@ def flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_pat
         outies_info = flash_str_list[-8]
         outies_percent = float(outies_info[outies_info.find('(')+1:outies_info.find('%')])
         print('outies_percent:', outies_percent)
-        if outies_percent < 15:
+        if outies_percent >= 15:
             allow_outies_count += 1
 
     path_flash_fqs = flash_part2(flash_output_str, flash_output_path)
@@ -188,3 +188,27 @@ def flash_check_cv(flash_output_path):
 
     hist_len = len(hist_files)
     return total_cv/hist_len, total_mean/hist_len, total_std/hist_len
+
+
+def trimmer_learning(flash_output_filenames):
+    filter_q_sum = 0
+    trim_q_sum = 0
+    length = 0
+    for fq_path in flash_output_filenames:
+        with open(fq_path) as fq_inf:
+            fq_gen = read_fastq(fq_inf)
+            for gen in fq_gen:
+                qualities = gen[2]
+                length = length + len(qualities)
+                qualities = [ord(qual) for qual in qualities]
+                filter_q_sum = filter_q_sum + sum(qualities)
+                trim_q_sum = trim_q_sum + sum(qualities[:10]) + sum(qualities[-10:])
+
+    print('filter_q_sum:', filter_q_sum)
+    print('trim_q_sum:', trim_q_sum)
+    print('total length:', length)
+    print('filter_q:', filter_q_sum/length)
+    print('trim_q:', trim_q_sum/length)
+
+    return round(filter_q_sum/length), round(trim_q_sum/length)
+
