@@ -38,14 +38,14 @@ def make_arg_parser():
                                      usage='shi7 v0.91 -i <input> -o <output> ...')
     parser.add_argument('--gotta_split', help='Split one giant fastq (or one pair of R1/R2) into 1 fastq per sample', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
     parser.add_argument('--gotta_split_output', help='output directory for the newly-split fastqs')
-    parser.add_argument('--gotta_split_r1', help='r1 to split')
-    parser.add_argument('--gotta_split_r2', help='r2 to split')
+    parser.add_argument('--gotta_split_r1', help='r1 to split by sample names in oligos.txt')
+    parser.add_argument('--gotta_split_r2', help='r2 to split by sample names in oligos.txt')
     parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('--adaptor', help='Set the type of the adaptors to remove (default: None)', choices=['None', 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stitching (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
-    parser.add_argument('--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
+    parser.add_argument('-outies','--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--convert_fasta', help='Enable (True) or Disable (False) the conversion of FASTQS to FASTA (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--combine_fasta', help='Enable (True) or Disable (False) the FASTA append mode (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     #parser.add_argument('--shell', help='Use shell in Python system calls, NOT RECOMMENDED (default: Disabled)', dest='shell', action='store_true')
@@ -56,13 +56,12 @@ def make_arg_parser():
     parser.add_argument('-s', '--strip_underscore', help='Prune sample names after the first underscore (default: %(default)s)',default="False")
     # TODO: Table of presets for different variable regions
     parser.add_argument('-m', '--min_overlap',
-                        help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
+                        help='Set the minimum overlap length between two reads. If V4 w/primers, try 285 (default: %(default)s)', default=10, type=int)
     parser.add_argument('-M', '--max_overlap',
-                        help='Set the maximum overlap length between two reads. If V4 set to 300 (default: %(default)s)', default=700, type=int)
-    # TODO: The read lengths should be cut in half when you are in SE mode
+                        help='Set the maximum overlap length between two reads. If V4 w/primers, try 300 (default: %(default)s)', default=700, type=int)
     parser.add_argument('-filter_l', '--filter_length', help='Set the length of reads to retain (default: %(default)s)', default=80, type=int)
-    parser.add_argument('-filter_q', '--filter_qual', help='Set the avg quality of the reads to retain (default: %(default)s)', default=30, type=int)
-    parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=20, type=int)
+    parser.add_argument('-filter_q', '--filter_qual', help='Set the avg quality of the reads to retain (default: %(default)s)', default=35, type=int)
+    parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=32, type=int)
     parser.set_defaults(shell=False, single_end=False)
 
     return parser
@@ -127,15 +126,15 @@ def read_fastq(fh):
             title = next(fh)
         # Record begins
         if title[0] != '@':
-            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         title = title[1:].strip()
         sequence = next(fh).strip()
         garbage = next(fh).strip()
         if garbage[0] != '+':
-            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         qualities = next(fh).strip()
         if len(qualities) != len(sequence):
-            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         yield title, sequence, qualities
 
 def split_fwd_rev(paths):
@@ -146,7 +145,7 @@ def split_fwd_rev(paths):
         # TODO Replace '1's with '2's and check for name equality
         # break
     if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
-        raise ValueError('Error: The input directory %s must contain at least one pair of R1 & R2 fastq file!' % os.path.dirname(paths[0]))
+        raise ValueError('Error: The input directory %s must contain paired fastq or fq files!' % os.path.dirname(paths[0]))
     return path_R1_fastqs, path_R2_fastqs
 
 
@@ -278,7 +277,7 @@ def main():
 
     if args.split:
         if not args.r1 and not args.r2:
-            raise ValueError('Error: argument -r1 and -r2 flag are required for split!')
+            raise ValueError('Error: arguments -r1 and -r2 are required for split!')
         elif not args.r1:
             raise ValueError('Error: argument -r1 is required for split!')
         elif not args.r2:
@@ -318,7 +317,7 @@ def main():
         if args.gotta_split_output:
             splitted_output = args.gotta_split_output
         else:
-            splitted_output = os.path.join(os.path.dirname(args.input), 'splitted fastqs') #the args.input here is the oligos path
+            splitted_output = os.path.join(os.path.dirname(args.input), 'split_fastqs') #the args.input here is the oligos path
 
         gotta_split(args.gotta_split_r1, args.gotta_split_r2, args.input, splitted_output)
         args.input = splitted_output
