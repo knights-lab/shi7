@@ -3,7 +3,7 @@
 2. Java
 
 # Installation
-New way (Linux and Mac): grab the latest [release](https://github.com/knights-lab/shi7en/releases), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
+New way (Linux and Mac): grab the latest [release](https://github.com/knights-lab/shi7/releases), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
 
 How to add to PATH? Well, like this:
 
@@ -30,6 +30,12 @@ This sets the minimum read length to 285 and the maximum to 300 when stitching, 
 If you have shotgun sequences, you might not want to try stitching (we recommend trying first and seeing how many stitch):
 
 `--flash False`
+
+# Cite
+
+To cite SHI7:
+`Al-Ghalith GA, Ang K, Hillmann B, Knights D. (2017). SHI7: A Streamlined short-read iterative trimming pipeline. DOI:10.5281/zenodo.808832`  [![DOI](https://zenodo.org/badge/66102758.svg)](https://zenodo.org/badge/latestdoi/66102758)
+
 
 # Installation (old way)
 
