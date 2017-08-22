@@ -2,7 +2,8 @@
 from shi7.shi7 import *
 import multiprocessing
 import os
-import numpy as np
+import csv
+#TODO: Finish the inner array SD and Mean
 
 
 def subsample_fastqs(path_fastqs, num_files=10, num_sequences=100):
@@ -175,6 +176,8 @@ def flash_check_cv(flash_output_path):
     total_mean = 0
     total_std = 0
     for f in hist_files:
+        with open(f) as inf:
+            csv_inf = csv.reader(inf, delimiter="\t")
         freq_table = np.loadtxt(f)
         all_nums = [[row[0]]*int(row[1]) for row in freq_table]
         all_nums = sum(all_nums, [])
