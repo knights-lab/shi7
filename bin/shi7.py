@@ -11,22 +11,18 @@ from datetime import datetime
 
 import logging
 
-TRUE_FALSE_DICT = {"True": True,
-              "False": False,
+TRUE_FALSE_DICT = {
               "true": True,
               "false": False,
-              "T": True,
-              "F": False,
               "t": True,
               "f": False,
               "1": True,
-              "0": False,
-              "TRUE": True,
-              "FALSE": False
+              "0": False
               }
 
 
 def convert_t_or_f(value):
+    value = value.lower()
     return TRUE_FALSE_DICT[value]
 
 STRIP = "False"
