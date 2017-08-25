@@ -239,7 +239,7 @@ def convert_fastqs(input_fastqs, output_path):
     return output_filenames
 
 
-def convert_combine_fastqs(input_fastqs, output_path, drop_r2):
+def convert_combine_fastqs(input_fastqs, output_path, drop_r2=False):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
     with open(output_filename, 'w') as outf_fasta:
         for path_input_fastq in input_fastqs:
@@ -381,10 +381,10 @@ def main():
         convert_output = os.path.join(args.output, 'temp', 'convert')
         os.makedirs(convert_output)
         if not args.debug and args.combine_fasta:
-            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2)
+            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2=drop_r2)
         elif args.combine_fasta:
             convert_fastqs(path_fastqs, convert_output)
-            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2)
+            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2=drop_r2)
         else:
             path_fastqs = convert_fastqs(path_fastqs, convert_output)
         logging.info('Convert ' + ('and combine ' if args.combine_fasta else '') + 'FASTQs done!')
