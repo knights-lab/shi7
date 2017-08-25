@@ -62,8 +62,7 @@ def make_arg_parser():
     parser.add_argument('-filter_l', '--filter_length', help='Set the length of reads to retain (default: %(default)s)', default=80, type=int)
     parser.add_argument('-filter_q', '--filter_qual', help='Set the avg quality of the reads to retain (default: %(default)s)', default=35, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=32, type=int)
-    parser.add_argument('--drop_r2', help='When combining FASTAs, drop R2 reads (helpful with --flash False on PE reads)', action='store_true',
-                        default=False)
+    parser.add_argument('--drop_r2', help='When combining FASTAs, drop R2 reads and remove "R1" from read name (helpful with non-stitchable PE reads) (default: False)', choices=[True, False], default='False', type=convert_t_or_f)
     parser.set_defaults(shell=False, single_end=False)
 
     return parser
