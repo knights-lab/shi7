@@ -58,6 +58,7 @@ def make_arg_parser():
     parser.add_argument('-filter_l', '--filter_length', help='Set the length of reads to retain (default: %(default)s)', default=80, type=int)
     parser.add_argument('-filter_q', '--filter_qual', help='Set the avg quality of the reads to retain (default: %(default)s)', default=35, type=int)
     parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=32, type=int)
+    parser.add_argument('--drop_r2', help='When combining FASTAs, drop R2 reads and remove "R1" from read name (helpful with non-stitchable PE reads) (default: False)', choices=[True, False], default='False', type=convert_t_or_f)
     parser.set_defaults(shell=False, single_end=False)
 
     return parser
@@ -234,7 +235,7 @@ def convert_fastqs(input_fastqs, output_path):
     return output_filenames
 
 
-def convert_combine_fastqs(input_fastqs, output_path):
+def convert_combine_fastqs(input_fastqs, output_path, drop_r2=False):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
     with open(output_filename, 'w') as outf_fasta:
         for path_input_fastq in input_fastqs:
@@ -242,7 +243,14 @@ def convert_combine_fastqs(input_fastqs, output_path):
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
-                        outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+                        if drop_r2 and basename.endswith('R2'):
+                            continue
+                        elif drop_r2:
+                            basename = basename.replace('R1', '')
+                            outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+                            continue
+                        else:
+                            outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
 
 
@@ -365,13 +373,14 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # CONVERT FASTQ TO FASTA
     if args.convert_fasta:
+        drop_r2 = args.drop_r2
         convert_output = os.path.join(args.output, 'temp', 'convert')
         os.makedirs(convert_output)
         if not args.debug and args.combine_fasta:
-            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output)
+            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2=drop_r2)
         elif args.combine_fasta:
             convert_fastqs(path_fastqs, convert_output)
-            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output)
+            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2=drop_r2)
         else:
             path_fastqs = convert_fastqs(path_fastqs, convert_output)
         logging.info('Convert ' + ('and combine ' if args.combine_fasta else '') + 'FASTQs done!')
