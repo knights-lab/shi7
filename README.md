@@ -13,6 +13,7 @@ echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
 ```
 
 # Usage examples:
+
 Assuming you have a bunch of fastq files, of forward and reverse reads, split up by sample, that have Nextera adaptors: 
 
 `shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera`
@@ -27,9 +28,20 @@ If you have V4 16S metagenomic reads, you can get fancier:
 
 This sets the minimum read length to 285 and the maximum to 300 when stitching, which is the canonical HMP V4 16S primer coverage region. This can be a powerful QC step in and of itself. Note: if using the EMP V4 protocol, omit these arguments.
 
-If you have shotgun sequences, you might not want to try stitching (we recommend trying first and seeing how many stitch):
+If you have shotgun sequences, you might want to try not stitching (we recommend trying first and seeing how many stitch -- see the percent combined reported in the shi7.log file):
 
 `--flash False`
+
+Including `--drop_r2 True` here returns only the R1 reads.
+
+We recommend the following format for sequence file names:
+```
+sampleID_other_information_R1.fastq
+sampleID_other_information_R2.fastq
+```
+Then, using `strip_underscore True` will return processed reads with just the sampleID, simplifying downstream processing. For example, an efficient command for non-stitching shotgun sequences:
+
+`shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera --flash False --strip_underscore True --drop_r2 True`
 
 # Cite
 
