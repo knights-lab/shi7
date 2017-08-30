@@ -1,2 +1,2 @@
 from .shi7 import *
-from .learning import *
+from .shi7_learning import *
