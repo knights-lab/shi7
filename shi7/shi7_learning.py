@@ -31,6 +31,7 @@ def subsample_fastqs(path_fastqs, num_files=10, num_sequences=100):
             if i >= num_files:
                 break
             fastq_gen = read_fastq(fastq_inf)
+            yield os.path.basename(path_fastq)
             yield limit_fastq(fastq_gen, num_sequences=num_sequences)
 
 
@@ -97,7 +98,6 @@ def detect_paired_end(path_fastqs):
         return False
     path_fastqs = sorted(path_fastqs)
     path_R1_fastqs, path_R2_fastqs = path_fastqs[::2], path_fastqs[1::2]
-    print(path_R2_fastqs)
     if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
         return False
     R1_lines_num = []
@@ -120,38 +120,26 @@ def detect_paired_end(path_fastqs):
 def get_directory_size(path):
     return sum([get_file_size(os.path.join(path, fastq)) for fastq in os.listdir(path)])
 
-
 def remove_directory_contents(path):
     for f in os.listdir(path):
         os.remove(os.path.join(path, f))
 
-def choose_axe_adaptors(path_subsampled_fastqs, output_path):
+def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path):
     adapters = ['Nextera', 'TruSeq2', 'TruSeq3', 'TruSeq3-2']
     threads = min(multiprocessing.cpu_count(),16)
     original_size = get_directory_size(os.path.dirname(path_subsampled_fastqs[0]))
-    print('Original size of the subsampled_fastqs = ', original_size)
+    LOGGER.debug('Original size of the subsampled_fastqs = ', original_size)
     best_size = original_size
     best_adap = None
-    if detect_paired_end(path_subsampled_fastqs):
-        print("Entering paired end ...")
-        for adapter in adapters:
+    for adapter in adapters:
+        if paired_end:
             axe_adaptors_paired_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
-            fastqs_path_size = get_directory_size(output_path)
-            print(adapter, fastqs_path_size)
-            if fastqs_path_size < best_size:
-                best_size = fastqs_path_size
-                best_adap = adapter
-            remove_directory_contents(output_path)
-    else:
-        print("Entering single end ...")
-        for adapter in adapters:
+        else:
             axe_adaptors_single_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
-            fastqs_path_size = get_directory_size(output_path)
-            print(adapter, fastqs_path_size)
-            if fastqs_path_size < best_size:
-                best_size = fastqs_path_size
-                best_adap = adapter
-            remove_directory_contents(output_path)
+        fastqs_path_size = get_directory_size(output_path)
+        if fastqs_path_size < best_size:
+            best_size = fastqs_path_size
+            best_adap = adapter
 
     if best_size < 0.995*original_size:
         return best_adap, best_size
@@ -248,6 +236,9 @@ def template_output(output):
     output = os.path.abspath(output)
     return "output\t{}".format(output), "--output {}".format(output)
 
+def template_choose_axe_adaptors(best_adapt, best_size):
+    pass
+
 def main():
     start_time = datetime.now()
 
@@ -261,18 +252,22 @@ def main():
     input = os.path.abspath(args.input)
     output = os.path.abspath(args.output)
 
+    # Make output folder
     if not os.path.exists(output):
         os.makedirs(output)
+
+    # Make temp outfolder
+    if os.path.exists(os.path.join(args.output, 'temp')):
+        shutil.rmtree(os.path.join(args.output, 'temp'))
+        logging.info('Existing temp directory deleted.')
+        os.makedirs(os.path.join(args.output, 'temp'))
+    else:
+        os.makedirs(os.path.join(args.output, 'temp'))
 
     # Put in the logging file
     logging.basicConfig(filename=os.path.join(output, 'shi7_learning.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     logger = logging.getLogger()
-
-    # Record the input
-    results, addon = template_input(input)
-    logger.info(results)
-    if addon:
-        learning_params.extend(addon)
+    global LOGGER
 
     path_fastqs = [os.path.join(input, f) for f in os.listdir(args.input) if f.endswith('fastq') or f.endswith('fq')]
 
@@ -281,17 +276,37 @@ def main():
         logger.critical(msg)
         raise IOError(msg)
 
-    # Detect if paired end
-    results, addon = template_paired_end(detect_paired_end(path_fastqs))
+    # Record the input
+    results, addon = template_input(input)
     logger.info(results)
     if addon:
-        learning_params.extend(addon)
+        learning_params.extend([addon])
+
+    # Detect if paired end
+    paired_end = detect_paired_end(path_fastqs)
+    results, addon = template_paired_end(paired_end)
+    logger.info(results)
+    if addon:
+        learning_params.extend([addon])
+
+    # Write temp subsampled fastqs
+    for file in subsample_fastqs(path_fastqs):
+        filename = next(file)
+        with open(os.path.ou)
+
+    # Detect adapters
+    best_adap, best_size = choose_axe_adaptors(subsample_fastqs(path_fastqs), paired_end, output)
+    print(best_adap)
+    results, addon = template_choose_axe_adaptors(best_adap, best_size)
+    logger.info(results)
+    if addon:
+        learning_params.extend([addon])
 
     # Detect output folder
     results, addon = template_output(output)
     logger.info(results)
     if addon:
-        learning_params.extend(addon)
+        learning_params.extend([addon])
 
     with open(os.path.join(args.output, "shi7_cmd.sh"), "w") as output:
         cmd = " ".join(learning_params)
