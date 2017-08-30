@@ -11,22 +11,18 @@ from datetime import datetime
 
 import logging
 
-TRUE_FALSE_DICT = {"True": True,
-              "False": False,
+TRUE_FALSE_DICT = {
               "true": True,
               "false": False,
-              "T": True,
-              "F": False,
               "t": True,
               "f": False,
               "1": True,
-              "0": False,
-              "TRUE": True,
-              "FALSE": False
+              "0": False
               }
 
 
 def convert_t_or_f(value):
+    value = value.lower()
     return TRUE_FALSE_DICT[value]
 
 STRIP = "False"
@@ -38,31 +34,31 @@ def make_arg_parser():
                                      usage='shi7 v0.91 -i <input> -o <output> ...')
     parser.add_argument('--gotta_split', help='Split one giant fastq (or one pair of R1/R2) into 1 fastq per sample', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
     parser.add_argument('--gotta_split_output', help='output directory for the newly-split fastqs')
-    parser.add_argument('--gotta_split_r1', help='r1 to split')
-    parser.add_argument('--gotta_split_r2', help='r2 to split')
+    parser.add_argument('--gotta_split_r1', help='r1 to split by sample names in oligos.txt')
+    parser.add_argument('--gotta_split_r2', help='r2 to split by sample names in oligos.txt')
     parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('--adaptor', help='Set the type of the adaptors to remove (default: None)', choices=['None', 'Nextera', 'TruSeq3', 'TruSeq2', 'TruSeq3-2'], default=None)
     parser.add_argument('-SE', help='Run in Single End mode (default: Disabled)', dest='single_end', action='store_true')
     parser.add_argument('--flash', help='Enable (True) or Disable (False) FLASH stitching (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--trim', help='Enable (True) or Disable (False) the TRIMMER (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
-    parser.add_argument('--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
+    parser.add_argument('-outies','--allow_outies', help='Enable (True) or Disable (False) the "outie" orientation (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--convert_fasta', help='Enable (True) or Disable (False) the conversion of FASTQS to FASTA (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     parser.add_argument('--combine_fasta', help='Enable (True) or Disable (False) the FASTA append mode (default: True)', choices=[True, False], default='True', type=convert_t_or_f)
     #parser.add_argument('--shell', help='Use shell in Python system calls, NOT RECOMMENDED (default: Disabled)', dest='shell', action='store_true')
-    parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory', required=True)
+    parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory OR oligos.txt if splitting', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
                         default=min(multiprocessing.cpu_count(),16))
     parser.add_argument('-s', '--strip_underscore', help='Prune sample names after the first underscore (default: %(default)s)',default="False")
     # TODO: Table of presets for different variable regions
     parser.add_argument('-m', '--min_overlap',
-                        help='Set the minimum overlap length between two reads. If V4 set to 285 (default: %(default)s)', default=20, type=int)
+                        help='Set the minimum overlap length between two reads. If V4 w/primers, try 285 (default: %(default)s)', default=10, type=int)
     parser.add_argument('-M', '--max_overlap',
-                        help='Set the maximum overlap length between two reads. If V4 set to 300 (default: %(default)s)', default=700, type=int)
-    # TODO: The read lengths should be cut in half when you are in SE mode
+                        help='Set the maximum overlap length between two reads. If V4 w/primers, try 300 (default: %(default)s)', default=700, type=int)
     parser.add_argument('-filter_l', '--filter_length', help='Set the length of reads to retain (default: %(default)s)', default=80, type=int)
-    parser.add_argument('-filter_q', '--filter_qual', help='Set the avg quality of the reads to retain (default: %(default)s)', default=30, type=int)
-    parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=20, type=int)
+    parser.add_argument('-filter_q', '--filter_qual', help='Set the avg quality of the reads to retain (default: %(default)s)', default=35, type=int)
+    parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=32, type=int)
+    parser.add_argument('--drop_r2', help='When combining FASTAs, drop R2 reads and remove "R1" from read name (helpful with non-stitchable PE reads) (default: False)', choices=[True, False], default='False', type=convert_t_or_f)
     parser.set_defaults(shell=False, single_end=False)
 
     return parser
@@ -127,15 +123,15 @@ def read_fastq(fh):
             title = next(fh)
         # Record begins
         if title[0] != '@':
-            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         title = title[1:].strip()
         sequence = next(fh).strip()
         garbage = next(fh).strip()
         if garbage[0] != '+':
-            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         qualities = next(fh).strip()
         if len(qualities) != len(sequence):
-            raise IOError('Malformed FASTQ files, verify they are linear and contain complete records.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         yield title, sequence, qualities
 
 def split_fwd_rev(paths):
@@ -146,7 +142,7 @@ def split_fwd_rev(paths):
         # TODO Replace '1's with '2's and check for name equality
         # break
     if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
-        raise ValueError('Error: The input directory %s must contain at least one pair of R1 & R2 fastq file!' % os.path.dirname(paths[0]))
+        raise ValueError('Error: The input directory %s must contain paired fastq or fq files!' % os.path.dirname(paths[0]))
     return path_R1_fastqs, path_R2_fastqs
 
 
@@ -182,7 +178,7 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
         unpaired_R1 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
         output_path_R2 = os.path.join(output_path, format_basename(input_path_R2) + '.fastq')
         unpaired_R2 = os.path.join(output_path, 'unpaired.%s' % os.path.basename(input_path_R1))
-        trim_cmd = ['trimmomatic', 'PE', '-threads', threads, input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data]
+        trim_cmd = ['trimmomatic', 'PE', '-threads', threads, input_path_R1, input_path_R2, output_path_R1, unpaired_R1,  output_path_R2, unpaired_R2, 'ILLUMINACLIP:%s:2:20:5:1:true' % adap_data]
         logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_path_R1)
         output_filenames.append(output_path_R2)
@@ -239,15 +235,22 @@ def convert_fastqs(input_fastqs, output_path):
     return output_filenames
 
 
-def convert_combine_fastqs(input_fastqs, output_path):
+def convert_combine_fastqs(input_fastqs, output_path, drop_r2=False):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
-    with open(output_filename, 'bw') as outf_fasta:
+    with open(output_filename, 'w') as outf_fasta:
         for path_input_fastq in input_fastqs:
                 basename = format_basename(path_input_fastq)
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
-                        outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+                        if drop_r2 and basename.endswith('R2'):
+                            continue
+                        elif drop_r2:
+                            basename = basename.replace('R1', '')
+                            outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+                            continue
+                        else:
+                            outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
     return [output_filename]
 
 
@@ -278,7 +281,7 @@ def main():
 
     if args.split:
         if not args.r1 and not args.r2:
-            raise ValueError('Error: argument -r1 and -r2 flag are required for split!')
+            raise ValueError('Error: arguments -r1 and -r2 are required for split!')
         elif not args.r1:
             raise ValueError('Error: argument -r1 is required for split!')
         elif not args.r2:
@@ -318,7 +321,7 @@ def main():
         if args.gotta_split_output:
             splitted_output = args.gotta_split_output
         else:
-            splitted_output = os.path.join(os.path.dirname(args.input), 'splitted fastqs') #the args.input here is the oligos path
+            splitted_output = os.path.join(os.path.dirname(args.input), 'split_fastqs') #the args.input here is the oligos path
 
         gotta_split(args.gotta_split_r1, args.gotta_split_r2, args.input, splitted_output)
         args.input = splitted_output
@@ -370,13 +373,14 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # CONVERT FASTQ TO FASTA
     if args.convert_fasta:
+        drop_r2 = args.drop_r2
         convert_output = os.path.join(args.output, 'temp', 'convert')
         os.makedirs(convert_output)
         if not args.debug and args.combine_fasta:
-            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output)
+            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2=drop_r2)
         elif args.combine_fasta:
             convert_fastqs(path_fastqs, convert_output)
-            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output)
+            path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2=drop_r2)
         else:
             path_fastqs = convert_fastqs(path_fastqs, convert_output)
         logging.info('Convert ' + ('and combine ' if args.combine_fasta else '') + 'FASTQs done!')

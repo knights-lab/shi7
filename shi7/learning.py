@@ -5,7 +5,6 @@ import os
 import csv
 #TODO: Finish the inner array SD and Mean
 
-
 def subsample_fastqs(path_fastqs, num_files=10, num_sequences=100):
     for i, path_fastq in enumerate(path_fastqs):
         with open(path_fastq) as fastq_inf:
