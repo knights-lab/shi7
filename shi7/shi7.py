@@ -25,7 +25,7 @@ def convert_t_or_f(value):
     value = value.lower()
     return TRUE_FALSE_DICT[value]
 
-STRIP = "False"
+STRIP = "false"
 VERSION = "0.92"
 
 
