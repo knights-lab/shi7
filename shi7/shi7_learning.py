@@ -169,27 +169,24 @@ def flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_pat
 
 def flash_check_cv(flash_output_path):
     hist_files = [os.path.join(flash_output_path, f) for f in os.listdir(flash_output_path) if f.endswith('.hist')]
-    print('.hist files', hist_files)
-
     total_cv = 0
-    total_mean = 0
-    total_std = 0
     for f in hist_files:
         with open(f) as inf:
             csv_inf = csv.reader(inf, delimiter="\t")
-        freq_table = np.loadtxt(f)
-        all_nums = [[row[0]]*int(row[1]) for row in freq_table]
-        all_nums = sum(all_nums, [])
-        std_dev = np.std(all_nums)
-        avg = np.mean(all_nums)
-        coeff_var = std_dev/avg
-        total_cv = total_cv + coeff_var
-        total_mean = total_mean + avg
-        total_std = total_std + std_dev
-        print("CV =", coeff_var)
-
-    hist_len = len(hist_files)
-    return total_cv/hist_len, total_mean/hist_len, total_std/hist_len
+        rows = [row for row in csv_inf]
+        x2f = 0
+        sum = 0
+        cnt = 0
+        for row in rows:
+            cnt = cnt + row[1]
+            sum = sum + row[0] * row[1]
+            x2f = x2f + row[0] * row[0] * row[1]
+        mean = sum/cnt
+        std = math.sqrt((x2f - sum*sum/cnt)/cnt-1)
+        cv = std/mean
+        total_cv = total_cv + cv
+    total_files = len(hist_files)
+    return total_cv/hist_len
 
 
 def trimmer_learning(flash_output_filenames):
