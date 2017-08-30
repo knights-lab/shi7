@@ -1,9 +1,29 @@
 #!/usr/bin/env python
-from shi7.shi7 import *
+from __future__ import print_function, division
 import multiprocessing
 import os
 import csv
+import datetime
+import logging
+from datetime import datetime
+import argparse
+
+from shi7 import VERSION, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, flash_part2, split_fwd_rev
+
 #TODO: Finish the inner array SD and Mean
+
+
+def make_arg_parser():
+    parser = argparse.ArgumentParser(description='This is the commandline interface for shi7_learning',
+                                     usage='shi7_learning v{version} -i <input> -o <output> ...'.format(version=VERSION))
+    parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory OR oligos.txt if splitting', required=True)
+    parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
+    parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
+                        default=min(multiprocessing.cpu_count(), 16))
+    parser.set_defaults()
+    return parser
+
+# template.format(input=input, adapters=adapters)
 
 def subsample_fastqs(path_fastqs, num_files=10, num_sequences=100):
     for i, path_fastq in enumerate(path_fastqs):
@@ -72,11 +92,12 @@ def check_sequence_name(path_R1, path_R2):
 
 
 def detect_paired_end(path_fastqs):
-    #path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq')]
+    path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq')]
     if len(path_fastqs) % 2 == 1:
         return False
     path_fastqs = sorted(path_fastqs)
     path_R1_fastqs, path_R2_fastqs = path_fastqs[::2], path_fastqs[1::2]
+    print(path_R2_fastqs)
     if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
         return False
     R1_lines_num = []
@@ -96,7 +117,6 @@ def detect_paired_end(path_fastqs):
         return False
     return True
 
-
 def get_directory_size(path):
     return sum([get_file_size(os.path.join(path, fastq)) for fastq in os.listdir(path)])
 
@@ -104,7 +124,6 @@ def get_directory_size(path):
 def remove_directory_contents(path):
     for f in os.listdir(path):
         os.remove(os.path.join(path, f))
-
 
 def choose_axe_adaptors(path_subsampled_fastqs, output_path):
     adapters = ['Nextera', 'TruSeq2', 'TruSeq3', 'TruSeq3-2']
@@ -214,3 +233,73 @@ def trimmer_learning(flash_output_filenames):
 
     return round(filter_q_sum/length), round(trim_q_sum/length)
 
+def template_input(input):
+    input = os.path.abspath(input)
+    # input, input_cmd
+    return "input\t{}".format(input), "--input {}".format(input)
+
+def template_paired_end(bool):
+    # bool, paired_end
+    if bool:
+        cmd = ""
+    else:
+        cmd = "-SE"
+    return "paired_end\t{}".format(str(bool)), cmd
+
+def template_output(output):
+    # output, output_cmd
+    output = os.path.abspath(output)
+    return "output\t{}".format(output), "--output {}".format(output)
+
+def main():
+    start_time = datetime.now()
+
+    parser = make_arg_parser()
+    args = parser.parse_args()
+
+    #learning_params = ['input_cmd', 'paired_end_cmd', 'output_cmd']
+    learning_params = ["shi7.py"]
+    #learning_dict = dict(zip(learning_params, [""]*len(learning_params)))
+
+    input = os.path.abspath(args.input)
+    output = os.path.abspath(args.output)
+
+    if not os.path.exists(output):
+        os.makedirs(output)
+
+    # Put in the logging file
+    logging.basicConfig(filename=os.path.join(output, 'shi7_learning.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logger = logging.getLogger()
+
+    # Record the input
+    results, addon = template_input(input)
+    logger.info(results)
+    if addon:
+        learning_params.extend(addon)
+
+    path_fastqs = [os.path.join(input, f) for f in os.listdir(args.input) if f.endswith('fastq') or f.endswith('fq')]
+
+    if len(path_fastqs) == 0:
+        msg = "No FASTQS found in input folder {}".format(input)
+        logger.critical(msg)
+        raise IOError(msg)
+
+    # Detect if paired end
+    results, addon = template_paired_end(detect_paired_end(path_fastqs))
+    logger.info(results)
+    if addon:
+        learning_params.extend(addon)
+
+    # Detect output folder
+    results, addon = template_output(output)
+    logger.info(results)
+    if addon:
+        learning_params.extend(addon)
+
+    with open(os.path.join(args.output, "shi7_cmd.sh"), "w") as output:
+        cmd = " ".join(learning_params)
+        output.write(cmd)
+        print(cmd)
+
+if __name__ == "__main__":
+    main()
