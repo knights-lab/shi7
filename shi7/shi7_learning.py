@@ -127,7 +127,7 @@ def remove_directory_contents(path):
         os.remove(os.path.join(path, f))
 
 def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path):
-    adapters = ['Nextera', 'TruSeq2', 'TruSeq3', 'TruSeq3-2']
+    adapters = ['TruSeq2', 'TruSeq3', 'Nextera', 'TruSeq3-2']
     threads = min(multiprocessing.cpu_count(),16)
     original_size = get_directory_size(os.path.dirname(path_subsampled_fastqs[0]))
     logging.debug('Original size of the subsampled_fastqs = ' + str(original_size))
@@ -135,9 +135,9 @@ def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path):
     best_adap = None
     for adapter in adapters:
         if paired_end:
-            axe_adaptors_paired_end(path_subsampled_fastqs, output_path, adapter, threads, shell=True)
+            axe_adaptors_paired_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
         else:
-            axe_adaptors_single_end(path_subsampled_fastqs, output_path, adapter, threads, shell=True)
+            axe_adaptors_single_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
         fastqs_path_size = get_directory_size(output_path)
         if fastqs_path_size < best_size:
             best_size = fastqs_path_size
