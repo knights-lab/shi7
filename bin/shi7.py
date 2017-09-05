@@ -191,7 +191,9 @@ def flash_part1(input_fastqs, output_path, max_overlap, min_overlap, allow_outie
     flash_output_str = []
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
-        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', format_basename(re.sub('R1', '', input_path_R1)), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
+        k = input_path_R1.rfind("R1")
+        new = input_path_R1[:k] + input_path_R1[k+2:]
+        flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', format_basename(new), '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
         flash_output_str.append(run_command(flash_cmd, shell=shell))
