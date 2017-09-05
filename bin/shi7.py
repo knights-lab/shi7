@@ -15,8 +15,6 @@ TRUE_FALSE_DICT = {
               "true": True,
               "false": False,
               "t": True,
-              "T": True,
-              "F": False,
               "f": False,
               "1": True,
               "0": False
@@ -92,7 +90,7 @@ def run_command(cmd, shell=False):
 
 
 def format_basename(filename):
-    if TRUE_FALSE_DICT[STRIP]:
+    if convert_t_or_f(STRIP):
         parts = os.path.basename(filename).split('_')
         if len(parts) == 1:
             return re.sub('[^0-9a-zA-Z]+', '.', '.'.join(parts[0].split('.')[:-1]))
