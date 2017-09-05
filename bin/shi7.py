@@ -15,6 +15,8 @@ TRUE_FALSE_DICT = {
               "true": True,
               "false": False,
               "t": True,
+              "T": True,
+              "F": False,
               "f": False,
               "1": True,
               "0": False
