@@ -245,10 +245,11 @@ def convert_combine_fastqs(input_fastqs, output_path, drop_r2=False):
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
-                        if drop_r2 and basename.endswith('R2'):
+                        if drop_r2 and basename.endswith('_R2'):
                             continue
-                        elif drop_r2:
-                            basename = basename.replace('R1', '')
+                        elif drop_r2 and basename.endswith('_R1'):
+                            nlim = len(basename.split('_'))
+                            basename = '_'.join(basename.split('_')[0:nlim])
                             outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
                             continue
                         else:
