@@ -25,7 +25,7 @@ def convert_t_or_f(value):
     value = value.lower()
     return TRUE_FALSE_DICT[value]
 
-STRIP = "False"
+STRIP = "false"
 
 
 def make_arg_parser():
@@ -49,7 +49,7 @@ def make_arg_parser():
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
                         default=min(multiprocessing.cpu_count(),16))
-    parser.add_argument('-s', '--strip_underscore', help='Prune sample names after the first underscore (default: %(default)s)',default="False")
+    parser.add_argument('-s', '--strip_underscore', help='Prune sample names after the first underscore (default: %(default)s)',default="false")
     # TODO: Table of presets for different variable regions
     parser.add_argument('-m', '--min_overlap',
                         help='Set the minimum overlap length between two reads. If V4 w/primers, try 285 (default: %(default)s)', default=10, type=int)
@@ -245,11 +245,10 @@ def convert_combine_fastqs(input_fastqs, output_path, drop_r2=False):
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
-                        if drop_r2 and basename.endswith('_R2'):
+                        if drop_r2 and basename.endswith('R2'):
                             continue
-                        elif drop_r2 and basename.endswith('_R1'):
-                            nlim = len(basename.split('_'))
-                            basename = '_'.join(basename.split('_')[0:nlim])
+                        elif drop_r2:
+                            basename = basename.replace('R1', '')
                             outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
                             continue
                         else:
