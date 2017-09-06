@@ -126,11 +126,11 @@ def remove_directory_contents(path):
     for f in os.listdir(path):
         os.remove(os.path.join(path, f))
 
-def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path):
-    adapters = ['TruSeq2', 'TruSeq3', 'Nextera', 'TruSeq3-2']
-    threads = min(multiprocessing.cpu_count(),16)
+def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path, threads):
+    adapters = ['TruSeq2', 'TruSeq3', 'TruSeq3-2', 'Nextera']
+    threads = min(threads, multiprocessing.cpu_count(), 16)
     original_size = get_directory_size(os.path.dirname(path_subsampled_fastqs[0]))
-    logging.debug('Original size of the subsampled_fastqs = ' + str(original_size))
+    logging.info('Original size of the subsampled_fastqs = ' + str(original_size))
     best_size = original_size
     best_adap = None
     for adapter in adapters:
@@ -139,12 +139,13 @@ def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path):
         else:
             axe_adaptors_single_end(path_subsampled_fastqs, output_path, adapter, threads, shell=False)
         fastqs_path_size = get_directory_size(output_path)
-        if fastqs_path_size < best_size:
+        logging.info("Adapters: {adapter}\tFile Size: {filesize}".format(adapter=adapter, filesize=fastqs_path_size))
+        if fastqs_path_size <= best_size:
             best_size = fastqs_path_size
             best_adap = adapter
 
+    logging.info("Best Adapters: {adapter}\tFile Size: {filesize}".format(adapter=best_adap, filesize=best_size))
     if best_size < 0.995*original_size:
-        print(best_size)
         return best_adap, best_size
     else:
         return None, original_size
@@ -309,7 +310,7 @@ def main():
     # Detect adapters
     axe_adaptors_path = os.path.join(output, 'temp', 'axe_adaptors')
     os.makedirs(axe_adaptors_path)
-    best_adap, best_size = choose_axe_adaptors(subsampled_fastq_paths, paired_end, axe_adaptors_path)
+    best_adap, best_size = choose_axe_adaptors(subsampled_fastq_paths, paired_end, axe_adaptors_path, int(args.threads))
     results, addon = template_choose_axe_adaptors(best_adap, best_size)
     logging.info(results)
     if addon:
