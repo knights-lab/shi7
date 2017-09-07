@@ -12,7 +12,7 @@ echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
 . ~/.bashrc
 ```
 
-# Usage examples:
+## Usage examples:
 
 Assuming you have a bunch of fastq files, of forward and reverse reads, split up by sample, that have Nextera adaptors: 
 
@@ -22,17 +22,17 @@ Assuming you only have R1 reads (no paired end):
 
 `shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera -SE`
 
-If you have V4 16S metagenomic reads, you can get fancier:
+If you have V4 region 16S metagenomic reads, you can get fancier:
 
 `-m 285 -M 300`
 
-This sets the minimum read length to 285 and the maximum to 300 when stitching, which is the canonical HMP V4 16S primer coverage region. This can be a powerful QC step in and of itself. Note: if using the EMP V4 protocol, omit these arguments.
+This sets the minimum read length to 285 and the maximum to 300 when stitching, which is the canonical HMP V4 16S primer coverage region. This can be a powerful QC step in and of itself. Note: if using the [EMP V4 protocol](http://press.igsb.anl.gov/earthmicrobiome/protocols-and-standards/16s/), omit these arguments.
 
-If you have shotgun sequences, you might want to try not stitching (we recommend trying first and seeing how many stitch -- see the percent combined reported in the shi7.log file):
+If you have shotgun sequences, you might want to try not stitching (we recommend trying first and seeing how many stitch -- "percent combined" in the `shi7.log` file):
 
 `--flash False`
 
-Including `--drop_r2 True` here returns only the R1 reads.
+Including `--drop_r2 True` in this case returns only R1 reads.
 
 We recommend the following format for sequence file names:
 ```
@@ -46,7 +46,8 @@ Then, using `strip_underscore True` will return processed reads with just the sa
 # Cite
 
 To cite SHI7:
-`Al-Ghalith GA, Ang K, Hillmann B, Knights D. (2017). SHI7: A Streamlined short-read iterative trimming pipeline. DOI:10.5281/zenodo.808832`  [![DOI](https://zenodo.org/badge/66102758.svg)](https://zenodo.org/badge/latestdoi/66102758)
+`Al-Ghalith GA, Ang K, Hillmann B, Shields-Cutler R, Knights D. (2017). SHI7: A Streamlined short-read iterative trimming pipeline. DOI:10.5281/zenodo.808832`  [![DOI](https://zenodo.org/badge/66102758.svg)](https://zenodo.org/badge/latestdoi/66102758)
+
 
 
 # Installation (old way)
