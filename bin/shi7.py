@@ -140,7 +140,6 @@ def axe_adaptors_single_end(input_fastqs, output_path, adapters, threads=1, shel
     output_filenames = []
     for fastq in input_fastqs:
         output_fastq = os.path.join(output_path, os.path.basename(fastq))
-        print("The output axe path: "+output_fastq)
         trim_cmd = ['trimmomatic', 'SE', '-threads', threads, fastq, output_fastq, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data]
         logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_fastq)
