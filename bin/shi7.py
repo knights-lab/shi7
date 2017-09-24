@@ -244,7 +244,7 @@ def strip_delim(path_fastqs, token):
     if token == "": return stripped_names
     sp_token = token.split(",")
     if (len(sp_token) != 2 or (int)(sp_token[1]) < 1):
-        raise ValueError('ERROR: strip_delim arg must be written as d,n where d=delim, n=which')
+        raise ValueError("ERROR: strip_delim arg must be 'd,n' (d=delimeter, n=which one).")
     delim = sp_token[0]
     count = int(sp_token[1])
     logging.info("Splitting names on occurance #%d of delimiter: %s" % (count,delim))
@@ -253,8 +253,7 @@ def strip_delim(path_fastqs, token):
         name = stripped_names[i]
         splits = name.split(delim)
         if len(splits) > count:
-            ext = splits[-1].split(".")[-1]
-            stripped_names[i] = delim.join(splits[0:count]) + "." + ext
+            stripped_names[i] = delim.join(splits[0:count]) + ".fq"
     return stripped_names
 
 
@@ -265,44 +264,46 @@ def match_pairs(path_fastqs, doSE):
         raise ValueError("ERROR: Odd number of fastq files in paired-end mode.")
     Pat1 = [".R1","_R1","-R1","R1",".1","_1","-1",".0","_0","-0",".F","_F","-F"]
     Pat2 = [".R2","_R2","-R2","R2",".2","_2","-2",".1","_1","-1",".R","_R","-R"]
+    path = os.path.dirname(path_fastqs[0])
     for i in range(0,len(Pat1)):
         p1 = Pat1[i]
         p2 = Pat2[i]
         matched = 0
         where = []
-        #print("Trying pattern " + p1)
         for j in range(0,nfiles):
             n = os.path.basename(path_fastqs[j])
             Ixs = [m.start() for m in re.finditer(p1,n)]
             if len(Ixs) == 0: continue
             for k in range(0,len(Ixs)):
                 trans = n[0:Ixs[k]] + p2 + n[(Ixs[k]+len(p1)):]
-                #print("Found pattern " + p1 + " in " + n + " at ix " + str(Ixs[k]))
-                #print("Searching for complementary: " + trans)
+                #print("Found pattern " + p1 + " in " + n + " at # " + str(Ixs[k]))
                 if trans in orig:
-                    where.append(k)
+                    where.append(Ixs[k])
                     matched = matched + 1
+                    break
         if matched == nfiles // 2:
             matched = 0
-            med = where[len(where)//2]
-            #print("Pattern "+p1+" works with median place "+str(med))
+            minp = min(where) 
+            plen = len(p1)
             neworig = []
+            nwhere = []
             for k in range(0,nfiles):
+                if matched >= nfiles // 2: break
                 n = os.path.basename(path_fastqs[k])
-                Ixs = [m.start() for m in re.finditer(p1,n)]
-                if len(Ixs) <= med: continue
-                d = os.path.dirname(path_fastqs[k])
-                trans = os.path.join(d, n[0:Ixs[med]] + p2 + n[(Ixs[med]+len(p1)):])
+                ix = where[matched]
+                if n[ix:ix+plen] != p1: continue
+                trans = os.path.join(path, n[0:ix] + p2 + n[ix+plen:])
                 neworig.append(path_fastqs[k])
                 neworig.append(trans)
+                nwhere += [ix,ix]
                 matched = matched + 1
             if matched == nfiles // 2: 
                 if doSE: 
                     logging.warning("WARNING: SE is toggled on apparently paired reads.")
                     if nfiles % 2: neworig = sorted(path_fastqs)
-                return [neworig, p1, p2, med]
+                return [neworig, p1, p2, nwhere]
     if not doSE: raise ValueError("ERROR: No known pattern reliably distinguishes mate pairs.")
-    return [path_fastqs, None, None, 0]
+    return [path_fastqs, None, None, None]
 
 
 def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
@@ -311,20 +312,29 @@ def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
     Names = []
     Rep2 = ["_R1","_R2"]
     which = delimCtr[2]
-    ambig = len(snames) > len(set(snames))
+    oset = set(snames)
+    ambig = len(snames) > len(oset)
+    plen = len(delimCtr[0])
     if ambig or not doSE:
         for i in range(0,nfiles):
             n = snames[i] 
             p = delimCtr[ctr]
-            Ixs = [m.start() for m in re.finditer(p,n)]
-            if len(Ixs) <= which: # devoured case
+            ix = which[i]
+            #print("File %d ('%s') supposedly has delim %s at pos %d" % (i,n,p,ix))
+            if len(n) <= ix + 3: # devoured case
                 eaten = eaten + 1
                 Names.append(n[0:n.rfind('.')]+Rep2[ctr])
             else:
-                n = n[0:Ixs[which]]+n[(Ixs[which]+len(p)):]
+                mate = n[0:ix]+delimCtr[not ctr]+n[ix+plen:]
+                if mate not in oset:
+                    raise ValueError('Loss of pair information: %s, mate %s' % (n,mate))
+                n = n[0:ix]+n[ix+plen:]
                 Names.append(n[0:n.rfind('.')]+Rep2[ctr])
             ctr = not ctr
         Names = [re.sub('[^0-9a-zA-Z]+', '.', e)+".fq" for e in Names]
+        for x in range(nfiles):
+            bn = os.path.basename(orig_paths[x])
+            logging.info("%s --> %s" % (bn,Names[x]))
     else: Names = snames
 
     if (len(Names) > len(set(Names))):
@@ -413,7 +423,7 @@ def main():
     pp_paths = match_pairs(path_fastqs, args.single_end)
     if (pp_paths[1]==None): 
         raise ValueError("No pattern found for distinguishing mate pairs. Try -SE")
-    logging.info("Detected pairs match on delimiter %s, occurance %d." % (pp_paths[1], pp_paths[3]))
+    logging.info("Detected pairs match on delimiter %s" % pp_paths[1])
     path_fastqs = pp_paths[0]
     snames = strip_delim(path_fastqs, args.strip_delim)
     link_outdir = os.path.join(tmpdir, 'link')
