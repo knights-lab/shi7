@@ -308,26 +308,25 @@ def match_pairs(path_fastqs, doSE):
 
 def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
     nfiles = len(snames)
-    ctr = eaten = 0
+    ctr = 0
     Names = []
     Rep2 = ["_R1","_R2"]
     which = delimCtr[2]
     oset = set(snames)
     ambig = len(snames) > len(oset)
     plen = len(delimCtr[0])
+    nmatches = len(which)
     if ambig or not doSE:
         for i in range(0,nfiles):
             n = snames[i] 
             p = delimCtr[ctr]
-            ix = which[i]
+            ix = which[i] if i < nmatches else -1
             #print("File %d ('%s') supposedly has delim %s at pos %d" % (i,n,p,ix))
-            if len(n) <= ix + 3: # devoured case
-                eaten = eaten + 1
-                Names.append(n[0:n.rfind('.')]+Rep2[ctr])
+            if ix < 0 or len(n) <= ix + 3: Names.append(n[0:n.rfind('.')]+Rep2[ctr])
             else:
                 mate = n[0:ix]+delimCtr[not ctr]+n[ix+plen:]
                 if mate not in oset:
-                    raise ValueError('Loss of pair information: %s, mate %s' % (n,mate))
+                    raise ValueError('No pair found: %s, mate %s' % (n,mate))
                 n = n[0:ix]+n[ix+plen:]
                 Names.append(n[0:n.rfind('.')]+Rep2[ctr])
             ctr = not ctr
