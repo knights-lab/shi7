@@ -2,20 +2,21 @@ from setuptools import setup, find_packages
 from glob import glob
 import os
 import platform
+import versioneer
 
 __author__ = "Knights Lab"
 __copyright__ = "Copyright (c) 2016--, %s" % __author__
 __credits__ = ["Kaiwei Ang", "Gabe Al-Ghalith", "Benjamin Hillmann"]
 __email__ = "hillmannben@gmail.com"
-__license__ = "GPLv3"
-__maintainer__ = "Kaiwei Ang"
-__version__ = "0.9.2"
+__license__ = "AGPL"
+__maintainer__ = "Benjamin Hillmann"
 
 long_description = 'All of your shi7 is one place. From quality scores to mappable reads.'
 
 setup(
     name='shi7',
-    version=__version__,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(),
     package_data={'shi7': ['adapters/*.fa']},
     url='',

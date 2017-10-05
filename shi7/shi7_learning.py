@@ -10,14 +10,15 @@ import argparse
 import shutil
 from glob import glob
 
-from shi7 import STRIP, VERSION, TRUE_FALSE_DICT, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, flash_part2, split_fwd_rev
+from shi7 import __version__
+from shi7.shi7 import STRIP, TRUE_FALSE_DICT, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, flash_part2, split_fwd_rev
 
 #TODO: Finish the inner array SD and Mean
 
 
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7_learning',
-                                     usage='shi7_learning v{version} -i <input> -o <output> ...'.format(version=VERSION))
+                                     usage='shi7_learning v{version} -i <input> -o <output> ...'.format(version=__version__))
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory OR oligos.txt if splitting', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
