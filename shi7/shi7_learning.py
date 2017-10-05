@@ -24,6 +24,7 @@ def make_arg_parser():
     parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
                         default=min(multiprocessing.cpu_count(), 16))
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
     parser.set_defaults()
     return parser
 

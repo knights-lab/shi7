@@ -60,7 +60,7 @@ def make_arg_parser():
     parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=32, type=int)
     parser.add_argument('--drop_r2', help='When combining FASTAs, drop R2 reads and remove "R1" from read name (default: False)', choices=[True, False], default='False', type=convert_t_or_f)
     parser.set_defaults(shell=False, single_end=False)
-
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
     return parser
 
 
