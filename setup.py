@@ -25,10 +25,11 @@ setup(
     description='',
     long_description=long_description,
     keywords='',
-    install_requires=['nose'],
+    install_requires=[],
     entry_points={
         'console_scripts': [
             'shi7 = shi7.shi7:main',
+            'shi7_learning = shi7.shi7_learning:main'
         ]
     },
 )
