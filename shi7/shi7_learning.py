@@ -36,7 +36,7 @@ def subsample_fastqs(path_fastqs, num_files=10, num_sequences=1000):
             yield limit_fastq(fastq_gen, num_sequences=num_sequences)
 
 
-def limit_fastq(fastq_gen, num_sequences=100):
+def limit_fastq(fastq_gen, num_sequences=1000):
     for i in range(num_sequences):
         yield next(fastq_gen)
 
@@ -100,25 +100,25 @@ def detect_paired_end(path_fastqs):
     path_fastqs = pair_obj[0]
     if pair_obj[1]==None: return False, pair_obj
     
-    # is the rest of this necessary? 
-    path_R1_fastqs, path_R2_fastqs = path_fastqs[::2], path_fastqs[1::2]
-    if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
-        return False, pair_obj
-    R1_lines_num = []
-    R2_lines_num = []
-    R1_files_size = []
-    R2_files_size = []
-    seqs_name = []
-    for path_R1_fastq in path_R1_fastqs:
-        R1_lines_num.append(count_num_lines(path_R1_fastq))
-        R1_files_size.append(get_file_size(path_R1_fastq))
-    for path_R2_fastq in path_R2_fastqs:
-        R2_lines_num.append(count_num_lines(path_R2_fastq))
-        R2_files_size.append(get_file_size(path_R2_fastq))
-    for path_R1_fastq, path_R2_fastq in zip(path_R1_fastqs, path_R2_fastqs):
-        seqs_name.append(check_sequence_name(path_R1_fastq, path_R2_fastq))
-    if not R1_lines_num == R2_lines_num or not R1_files_size == R2_files_size or False in seqs_name:
-        return False, pair_obj
+    # # is the rest of this necessary? 
+    # path_R1_fastqs, path_R2_fastqs = path_fastqs[::2], path_fastqs[1::2]
+    # if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
+    #     return False, pair_obj
+    # R1_lines_num = []
+    # R2_lines_num = []
+    # R1_files_size = []
+    # R2_files_size = []
+    # seqs_name = []
+    # for path_R1_fastq in path_R1_fastqs:
+    #     R1_lines_num.append(count_num_lines(path_R1_fastq))
+    #     R1_files_size.append(get_file_size(path_R1_fastq))
+    # for path_R2_fastq in path_R2_fastqs:
+    #     R2_lines_num.append(count_num_lines(path_R2_fastq))
+    #     R2_files_size.append(get_file_size(path_R2_fastq))
+    # for path_R1_fastq, path_R2_fastq in zip(path_R1_fastqs, path_R2_fastqs):
+    #     seqs_name.append(check_sequence_name(path_R1_fastq, path_R2_fastq))
+    # if not R1_lines_num == R2_lines_num or not R1_files_size == R2_files_size or False in seqs_name:
+    #     return False, pair_obj
     return True, pair_obj
 
 def get_directory_size(path):
@@ -232,11 +232,11 @@ def trimmer_learning(flash_output_filenames):
     logging.info('num seqs: %d' % num)
     logging.info('filter_q_sum: %d' % filter_q_sum)
     logging.info('trim_q_sum: %d' % trim_q_sum)
-    logging.info('total bases considered: %d' % totbases)
+    logging.info('total bases considered: %d (trim: %d)' % (totbases, tottrim))
     logging.info('filter_q: %d' % (filter_q_sum/totbases))
     logging.info('trim_q: %d' % (trim_q_sum/tottrim))
 
-    return math.floor(filter_q_sum/totbases), math.floor(trim_q_sum/tottrim), totbases/num
+    return math.floor(filter_q_sum/totbases), math.floor(trim_q_sum/tottrim)-3
 
 def template_input(input):
     input = os.path.abspath(input)
@@ -316,6 +316,7 @@ def main():
     # Write temp subsampled fastqs
     subsampled_fastq_path = os.path.join(output, 'temp', 'subsampled')
     os.makedirs(subsampled_fastq_path)
+    totbases = totseqs = 0
     for file in path_fastqs:
         basename = os.path.basename(file)
         with open(file) as fastq_inf:
@@ -323,6 +324,9 @@ def main():
             with open(os.path.join(subsampled_fastq_path, basename), 'w') as outf:
                 for header, seq, quality in limit_fastq(fastq_gen):
                     outf.write("@{header}\n{seq}\n+\n{quality}\n".format(header=header, seq=seq, quality=quality))
+                    totbases += len(seq)
+                    totseqs += 1
+    avlen = totbases/totseqs
     path_fastqs = glob(os.path.join(subsampled_fastq_path , "*"))
 
 
@@ -362,7 +366,7 @@ def main():
     logging.info(results)
     if addon: learning_params.extend(addon)
 
-    filt_q, trim_q, avlen = trimmer_learning(fastq_paths)
+    filt_q, trim_q = trimmer_learning(fastq_paths)
     results, addon = template_trim(int(filt_q), int(trim_q))
     logging.info(results)
     if addon: learning_params.extend(addon)
