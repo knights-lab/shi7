@@ -24,25 +24,29 @@ unzip shi7_0.92a_linux_release.zip
 chmod +x shi7_0.92_linux_release/*
  ```
 2. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
-`echo "PATH=$PWD/shi7_0.92_linux_release:$PATH" >> ~/.bashrc`
+```
+echo "PATH=$PWD/shi7_0.92_linux_release:$PATH" >> ~/.bashrc
+```
 3. Reload your terminal environment and test shi7.py:
 ```
 . ~/.bashrc
 shi7.py -h
 ```
-At this point you should see the help screen printed out.
+At this point you should see the help screen printed out and SHI7 should be installed.
 
 # Using SHI7 (simplest method):
-1. If running on a supercomputer like MSI (skip this step otherwise): 
+1. To run interactively on a supercomputer like MSI (skip this step otherwise): 
 ```
 isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00`
 module load python
 ```
-2. Learn the appropriate shi7 parameters from the data:
-`shi7_learning.py -i myFastqFolder -o learnt`
+2. Learn the appropriate shi7 parameters from the raw (unzipped) fastq data (replace 'myFastqFolder' with your actual data directory):
+```
+shi7_learning.py -i myFastqFolder -o learnt
+```
 3. Run shi7.py with the output of 2b:
 `chmod +x learnt/shi7_cmd.sh && ./learnt/shi7_cmd.sh`
-(or just copy the command that shi7_learning prints to your screen and run that)
+(or just copy the command that shi7_learning prints out when it finishes and run that)
 
 ## Other usage examples:
 
