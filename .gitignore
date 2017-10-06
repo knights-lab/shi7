@@ -170,3 +170,4 @@ fabric.properties
 *.su
 
 scratch
+*.pyz
