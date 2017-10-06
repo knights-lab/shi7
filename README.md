@@ -6,8 +6,11 @@
 
 ## The CONDA way (personal install)
 1. Follow steps 1 and 2 of https://bioconda.github.io/ (including installing MiniConda 3.6 if you don't have miniconda)
-2. Follow the install instructions here: https://anaconda.org/knights-lab/shi7
-
+2. Do this in a terminal:
+```
+conda create -n shi7 -c knights-lab shi7
+source activate shi7
+```
 
 ## Alternative portable/server install:
 Grab the latest [release](https://github.com/knights-lab/shi7/releases) package (not source), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
