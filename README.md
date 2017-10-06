@@ -9,18 +9,14 @@
 2. Follow the install instructions here: https://anaconda.org/knights-lab/shi7
 
 
-## Portable/server install:
+## Alternative portable/server install:
 Grab the latest [release](https://github.com/knights-lab/shi7/releases) package (not source), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
 
-How to add to PATH? Well, like this:
-
-```
-echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
-. ~/.bashrc
-```
+Confused or new to UNIX? Follow the super-specific directions below if you can't/won't follow the CONDA route above:
 
 ### Here are some super specific installation instructions for the portable install:
 For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open terminal and type `cd` and optionally enter a directory where you want to install SHI7).
+
 3. Download and unpack the latest release: 
  ```
 wget https://github.com/knights-lab/shi7/releases/download/v0.92/shi7_0.92a_linux_release.zip
