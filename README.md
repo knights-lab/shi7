@@ -30,7 +30,7 @@ chmod +x shi7_0.92_linux_release/*
 ```
 echo "PATH=$PWD/shi7_0.92_linux_release:$PATH" >> ~/.bashrc
 ```
-3. Reload your terminal environment and test shi7.py:
+3. (Optional) Reload your terminal environment and test shi7.py:
 ```
 . ~/.bashrc
 shi7.py -h
@@ -38,6 +38,8 @@ shi7.py -h
 At this point you should see the help screen printed out and SHI7 should be installed.
 
 # Using SHI7 (simplest method):
+*Note: if you installed via the CONDA method, omit the ".py" extension at the end of shi7 and shi7_learning*
+
 1. To run interactively on a supercomputer like MSI (skip this step otherwise): 
 ```
 isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00`
