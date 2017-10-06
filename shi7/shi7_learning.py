@@ -237,7 +237,7 @@ def trimmer_learning(flash_output_filenames):
     logging.info('trim_q: %d' % (trim_q_sum/tottrim))
 
     filter_q = math.floor(filter_q_sum/totbases)
-    trim_q = floor(trim_q_sum/tottrim)-1
+    trim_q = math.floor(trim_q_sum/tottrim)-1
     trim_q = trim_q if trim_q > filter_q - 3 else filter_q - 3
 
     return filter_q, trim_q
