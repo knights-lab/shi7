@@ -25,16 +25,16 @@ Installation on MSI (only do this once!):
 1. Log into MSI (ssh user@login.msi.umn.edu), then gain an interactive shell: 
 `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00`
 (Or replace this with logging into your own machine...)
-1. (optional; advanced). Change directory into where you'd like to install shi7 like "cd ~/bin"
-1. Download and unpack the latest release:
-```
+2. (optional; advanced). Change directory into where you'd like to install shi7 like "cd ~/bin"
+3. Download and unpack the latest release: 
+ ```
 wget https://github.com/knights-lab/shi7/releases/download/v0.92/shi7_0.92a_linux_release.zip
 unzip shi7_0.92a_linux_release.zip
 chmod +x shi7_0.92_linux_release/*
-```
-1. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
+ ```
+4. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
 `echo "PATH=$PWD/shi7_0.92_linux_release:$PATH" >> ~/.bashrc`
-1. Reload your terminal environment and test shi7.py:
+5. Reload your terminal environment and test shi7.py:
 ```
 . ~/.bashrc
 shi7.py -h
