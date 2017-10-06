@@ -19,13 +19,8 @@ echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
 . ~/.bashrc
 ```
 
-### Here are some more specific installation instructions that we use on our local supercomputer:
-Installation on MSI (only do this once!):
-
-1. Log into MSI (ssh user@login.msi.umn.edu), then gain an interactive shell: 
-`isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00`
-(Or replace this with logging into your own machine...)
-2. (optional; advanced). Change directory into where you'd like to install shi7 like "cd ~/bin"
+### Here are some super specific installation instructions for the portable install:
+For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open terminal and type `cd` and optionally enter a directory where you want to install SHI7).
 3. Download and unpack the latest release: 
  ```
 wget https://github.com/knights-lab/shi7/releases/download/v0.92/shi7_0.92a_linux_release.zip
@@ -41,16 +36,17 @@ shi7.py -h
 ```
 At this point you should see the help screen printed out.
 
-# Now, to use SHI7:
-1. Get on a system with about 1GB/ram per core you want to run SHI7 with:
-(our machine): 
+# Using SHI7 (simplest method):
+1. If running on a supercomputer like MSI (skip this step otherwise): 
 ```
 isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00`
 module load python
 ```
 2. Learn the appropriate shi7 parameters from the data:
 `shi7_learning.py -i myFastqFolder -o learnt`
-3. Run shi7.py with the output of 2b (if run; otherwise fresh: `shi7.py -i myFastqFolder -o myOutput ...other commands`)
+3. Run shi7.py with the output of 2b:
+`chmod +x learnt/shi7_cmd.sh && ./learnt/shi7_cmd.sh`
+(or just copy the command that shi7_learning prints to your screen and run that)
 
 ## Other usage examples:
 
