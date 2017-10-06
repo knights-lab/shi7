@@ -17,15 +17,15 @@ Confused or new to UNIX? Follow the super-specific directions below if you can't
 ### Here are some super specific installation instructions for the portable install:
 For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open terminal and type `cd` and optionally enter a directory where you want to install SHI7).
 
-3. Download and unpack the latest release: 
+1. Download and unpack the latest release: 
  ```
 wget https://github.com/knights-lab/shi7/releases/download/v0.92/shi7_0.92a_linux_release.zip
 unzip shi7_0.92a_linux_release.zip
 chmod +x shi7_0.92_linux_release/*
  ```
-4. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
+2. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
 `echo "PATH=$PWD/shi7_0.92_linux_release:$PATH" >> ~/.bashrc`
-5. Reload your terminal environment and test shi7.py:
+3. Reload your terminal environment and test shi7.py:
 ```
 . ~/.bashrc
 shi7.py -h
@@ -67,9 +67,9 @@ We recommend the following format for sequence file names:
 sampleID_other_information_R1.fastq
 sampleID_other_information_R2.fastq
 ```
-Then, using `strip_underscore True` will return processed reads with just the sampleID, simplifying downstream processing. For example, an efficient command for non-stitching shotgun sequences:
+Then, using `strip_underscore True` will return processed reads with just the sampleID, simplifying downstream processing. For example, an efficient command for non-stitching shotgun sequences with the sample names in the filenames before the first underscore character:
 
-`shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera --flash False --strip_underscore True --drop_r2 True`
+`shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera --flash False --strip_delim _,1 --drop_r2 True`
 
 # Cite
 
