@@ -3,7 +3,14 @@
 2. Java
 
 # Installation
-New way (Linux and Mac): grab the latest [release](https://github.com/knights-lab/shi7/releases), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
+
+## The CONDA way (personal install)
+1. Follow steps 1 and 2 of https://bioconda.github.io/ (including installing MiniConda 3.6 if you don't have miniconda)
+2. Follow the install instructions here: https://anaconda.org/knights-lab/shi7
+
+
+## Portable/server install:
+Grab the latest [release](https://github.com/knights-lab/shi7/releases) package (not source), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
 
 How to add to PATH? Well, like this:
 
@@ -12,7 +19,40 @@ echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
 . ~/.bashrc
 ```
 
-## Usage examples:
+### Here are some more specific installation instructions that we use on our local supercomputer:
+Installation on MSI (only do this once!):
+
+1. Log into MSI (ssh user@login.msi.umn.edu), then gain an interactive shell: 
+`isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00`
+(Or replace this with logging into your own machine...)
+1. (optional; advanced). Change directory into where you'd like to install shi7 like "cd ~/bin"
+1. Download and unpack the latest release:
+```
+wget https://github.com/knights-lab/shi7/releases/download/v0.92/shi7_0.92a_linux_release.zip
+unzip shi7_0.92a_linux_release.zip
+chmod +x shi7_0.92_linux_release/*
+```
+1. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
+`echo "PATH=$PWD/shi7_0.92_linux_release:$PATH" >> ~/.bashrc`
+1. Reload your terminal environment and test shi7.py:
+```
+. ~/.bashrc
+shi7.py -h
+```
+At this point you should see the help screen printed out.
+
+# Now, to use SHI7:
+1. Get on a system with about 1GB/ram per core you want to run SHI7 with:
+(our machine): 
+```
+isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00`
+module load python
+```
+2. Learn the appropriate shi7 parameters from the data:
+`shi7_learning.py -i myFastqFolder -o learnt`
+3. Run shi7.py with the output of 2b (if run; otherwise fresh: `shi7.py -i myFastqFolder -o myOutput ...other commands`)
+
+## Other usage examples:
 
 Assuming you have a bunch of fastq files, of forward and reverse reads, split up by sample, that have Nextera adaptors: 
 
@@ -21,10 +61,6 @@ Assuming you have a bunch of fastq files, of forward and reverse reads, split up
 Assuming you only have R1 reads (no paired end):
 
 `shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera -SE`
-
-If you have V4 region 16S metagenomic reads, you can get fancier:
-
-`-m 285 -M 300`
 
 This sets the minimum read length to 285 and the maximum to 300 when stitching, which is the canonical HMP V4 16S primer coverage region. This can be a powerful QC step in and of itself. Note: if using the [EMP V4 protocol](http://press.igsb.anl.gov/earthmicrobiome/protocols-and-standards/16s/), omit these arguments.
 
