@@ -1,0 +1,2 @@
+include versioneer.py
+include shi7/_version.py

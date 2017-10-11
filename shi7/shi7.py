@@ -12,6 +12,8 @@ from datetime import datetime
 
 import logging
 
+from shi7 import __version__
+
 TRUE_FALSE_DICT = {
               "true": True,
               "false": False,
@@ -26,11 +28,10 @@ def convert_t_or_f(value):
     value = value.lower()
     return TRUE_FALSE_DICT[value]
 
-VERSION = "0.92"
 def make_arg_parser():
     # TODO: Preset modes will get precedence over default values, but lose to explicit settings from user
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7',
-                                     usage='shi7 v%s -i <input> -o <output> ...' % VERSION)
+                                     usage='shi7 %s -i <input> -o <output> ...' % __version__)
     parser.add_argument('--gotta_split', help='Split one giant fastq (or one pair of R1/R2) into 1 fastq per sample', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
     parser.add_argument('--gotta_split_output', help='output directory for the newly-split fastqs')
     parser.add_argument('--gotta_split_r1', help='r1 to split by sample names in oligos.txt')
@@ -59,7 +60,7 @@ def make_arg_parser():
     parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=32, type=int)
     parser.add_argument('--drop_r2', help='When combining FASTAs, drop R2 reads and remove "R1" from read name (default: False)', choices=[True, False], default='False', type=convert_t_or_f)
     parser.set_defaults(shell=False, single_end=False)
-
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
     return parser
 
 
