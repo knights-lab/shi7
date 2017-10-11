@@ -11,7 +11,7 @@ __email__ = "hillmannben@gmail.com"
 __license__ = "AGPL"
 __maintainer__ = "Benjamin Hillmann"
 
-long_description = 'All of your shi7 is one place. From quality scores to mappable reads.'
+long_description = 'All of your shi7 in one place. From quality scores to mappable reads.'
 
 setup(
     name='shi7',
