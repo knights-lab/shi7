@@ -318,7 +318,6 @@ def main():
     link_outdir = os.path.join(output, 'temp', 'link')
     os.makedirs(link_outdir)
     snames = [os.path.basename(n) for n in path_fastqs]
-    print("My pair_obs has: ",str(pair_obj))
     path_fastqs = link_manicured_names(path_fastqs, snames, link_outdir, not paired_end, pair_obj[1:])
 
     results, addon = template_paired_end(paired_end)
