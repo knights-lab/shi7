@@ -64,12 +64,6 @@ def get_seq_length_qual_scores(path_fastqs, output_path, num_files=10, num_seque
     # Return (average length of sequences, average quality score)
     return sequence_len_sum/num_sequences, quality_sum/sequence_len_sum
 
-# def get_all_fastq_seqs_qual(path_fastqs):
-#     for i, path_fastq in enumerate(path_fastqs):
-#         with open(path_fastq) as fastq_inf:
-#             fastq_gen = read_fastq(fastq_inf)
-#             yield next(fastq_gen)
-
 
 def count_num_lines(path):
     with open(path) as path_inf:
@@ -98,30 +92,10 @@ def check_sequence_name(path_R1, path_R2):
 
 def detect_paired_end(path_fastqs):
     path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq')]
-    if len(path_fastqs) % 2 == 1: return False, path_fastqs
+    if len(path_fastqs) % 2 == 1: return False, [path_fastqs, None, None, None]
     pair_obj = match_pairs(path_fastqs, True)
     path_fastqs = pair_obj[0]
     if pair_obj[1]==None: return False, pair_obj
-    
-    # # is the rest of this necessary? 
-    # path_R1_fastqs, path_R2_fastqs = path_fastqs[::2], path_fastqs[1::2]
-    # if len(path_R1_fastqs) != len(path_R2_fastqs) or len(path_R1_fastqs) < 1:
-    #     return False, pair_obj
-    # R1_lines_num = []
-    # R2_lines_num = []
-    # R1_files_size = []
-    # R2_files_size = []
-    # seqs_name = []
-    # for path_R1_fastq in path_R1_fastqs:
-    #     R1_lines_num.append(count_num_lines(path_R1_fastq))
-    #     R1_files_size.append(get_file_size(path_R1_fastq))
-    # for path_R2_fastq in path_R2_fastqs:
-    #     R2_lines_num.append(count_num_lines(path_R2_fastq))
-    #     R2_files_size.append(get_file_size(path_R2_fastq))
-    # for path_R1_fastq, path_R2_fastq in zip(path_R1_fastqs, path_R2_fastqs):
-    #     seqs_name.append(check_sequence_name(path_R1_fastq, path_R2_fastq))
-    # if not R1_lines_num == R2_lines_num or not R1_files_size == R2_files_size or False in seqs_name:
-    #     return False, pair_obj
     return True, pair_obj
 
 def get_directory_size(path):
@@ -344,6 +318,7 @@ def main():
     link_outdir = os.path.join(output, 'temp', 'link')
     os.makedirs(link_outdir)
     snames = [os.path.basename(n) for n in path_fastqs]
+    print("My pair_obs has: ",str(pair_obj))
     path_fastqs = link_manicured_names(path_fastqs, snames, link_outdir, not paired_end, pair_obj[1:])
 
     results, addon = template_paired_end(paired_end)
