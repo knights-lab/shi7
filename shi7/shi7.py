@@ -341,7 +341,7 @@ def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
     if (len(Names) > len(set(Names))):
         raise ValueError('ERROR: processed file names are not unique.')
     Names = [os.path.join(subdir,n) for n in Names]
-    for i in range(0,nfiles): os.link(orig_paths[i],Names[i])
+    for i in range(0,nfiles): os.symlink(orig_paths[i],Names[i])
     return Names
 
 
@@ -422,7 +422,7 @@ def main():
     # Match pairs appropriately
 
     pp_paths = match_pairs(path_fastqs, args.single_end)
-    if (pp_paths[1]==None): 
+    if (not args.single_end and pp_paths[1]==None): 
         raise ValueError("No pattern found for distinguishing mate pairs. Try -SE")
     logging.info("Detected pairs match on delimiter %s" % pp_paths[1])
     path_fastqs = pp_paths[0]
