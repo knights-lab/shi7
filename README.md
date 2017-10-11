@@ -3,16 +3,57 @@
 2. Java
 
 # Installation
-New way (Linux and Mac): grab the latest [release](https://github.com/knights-lab/shi7/releases), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
 
-How to add to PATH? Well, like this:
-
+## The CONDA way (personal install)
+1. Follow steps 1 and 2 of https://bioconda.github.io/ (including installing MiniConda 3.6 if you don't have miniconda)
+2. Do this in a terminal:
 ```
-echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
+conda create -n shi7 -c knights-lab shi7
+source activate shi7
+```
+
+## Alternative portable/server install:
+Grab the latest [release](https://github.com/knights-lab/shi7/releases) package (not source), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
+
+Confused or new to UNIX? Follow the super-specific directions below if you can't/won't follow the CONDA route above:
+
+### Here are some super specific installation instructions for the portable install:
+For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open terminal and type `cd` and optionally enter a directory where you want to install SHI7).
+
+1. Download and unpack the latest release: 
+ ```
+wget https://github.com/knights-lab/shi7/releases/download/v0.92/shi7_0.92a_linux_release.zip
+unzip shi7_0.92a_linux_release.zip
+chmod +x shi7_0.92_linux_release/*
+ ```
+2. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
+```
+echo "PATH=$PWD/shi7_0.92_linux_release:$PATH" >> ~/.bashrc
+```
+3. (Optional) Reload your terminal environment and test shi7.py:
+```
 . ~/.bashrc
+shi7.py -h
 ```
+At this point you should see the help screen printed out and SHI7 should be installed.
 
-## Usage examples:
+# Using SHI7 (simplest method):
+*Note: if you installed via the CONDA method, omit the ".py" extension at the end of shi7 and shi7_learning*
+
+1. To run interactively on a supercomputer like MSI (skip this step otherwise): 
+```
+isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00`
+module load python
+```
+2. Learn the appropriate shi7 parameters from the raw (unzipped) fastq data (replace 'myFastqFolder' with your actual data directory):
+```
+shi7_learning.py -i myFastqFolder -o learnt
+```
+3. Run shi7.py with the output of 2b:
+`chmod +x learnt/shi7_cmd.sh && ./learnt/shi7_cmd.sh`
+(or just copy the command that shi7_learning prints out when it finishes and run that)
+
+## Other usage examples:
 
 Assuming you have a bunch of fastq files, of forward and reverse reads, split up by sample, that have Nextera adaptors: 
 
@@ -21,10 +62,6 @@ Assuming you have a bunch of fastq files, of forward and reverse reads, split up
 Assuming you only have R1 reads (no paired end):
 
 `shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera -SE`
-
-If you have V4 region 16S metagenomic reads, you can get fancier:
-
-`-m 285 -M 300`
 
 This sets the minimum read length to 285 and the maximum to 300 when stitching, which is the canonical HMP V4 16S primer coverage region. This can be a powerful QC step in and of itself. Note: if using the [EMP V4 protocol](http://press.igsb.anl.gov/earthmicrobiome/protocols-and-standards/16s/), omit these arguments.
 
@@ -39,111 +76,12 @@ We recommend the following format for sequence file names:
 sampleID_other_information_R1.fastq
 sampleID_other_information_R2.fastq
 ```
-Then, using `strip_underscore True` will return processed reads with just the sampleID, simplifying downstream processing. For example, an efficient command for non-stitching shotgun sequences:
+Then, using `strip_underscore True` will return processed reads with just the sampleID, simplifying downstream processing. For example, an efficient command for non-stitching shotgun sequences with the sample names in the filenames before the first underscore character:
 
-`shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera --flash False --strip_underscore True --drop_r2 True`
+`shi7.py -i MyFastQFolder -o MyOutputFolder --adaptor Nextera --flash False --strip_delim _,1 --drop_r2 True`
 
 # Cite
 
 To cite SHI7:
 `Al-Ghalith GA, Ang K, Hillmann B, Shields-Cutler R, Knights D. (2017). SHI7: A Streamlined short-read iterative trimming pipeline. DOI:10.5281/zenodo.808832`  [![DOI](https://zenodo.org/badge/66102758.svg)](https://zenodo.org/badge/latestdoi/66102758)
 
-
-
-# Installation (old way)
-
-These installation instructions are streamlined for Linux. The tool SHI7EN is installable on OSX/Windows with a few minor tweaks to this tutorial. This package requires anaconda, which is a system agnostic package and virtual environment manager. Follow the installation instructions for your system at <http://conda.pydata.org/miniconda.html>.
-
-Once anaconda is installed, create a new virtual environment with python3.
-
-```
-conda create -n shi7en python=3
-```
-
-Now activate the environment.
-
-```
-# OSX, Linux
-source activate shi7en
-```
-
-With the shogun environment activated, install the developmental SHI7EN toolchain.
-
-```
-# If you want to use flash
-conda install -c bioconda flash
-
-# If you want to use trimmomatic
-conda install -c bioconda trimmomatic
-
-# Install shi7en
-pip install git+https://github.com/knights-lab/shi7en --upgrade --no-cache-dir
-```
-
-With the flags provided to pip, copying and pasting any of these commands will redo the installation if a failure happened.
-
-The final step of the procedure is to add the binary shi7en_trimmer to your path. The binary is available on the [release page](https://github.com/knights-lab/shi7en/releases). It is either ```ninja_shi7_linux``` or ```ninja_shi7_mac```, depending on your machine. Please rename it to ```shi7en_trimmer```. The tutorial for adding the binary to your path is shown as following:
-
-```
-echo 'PATH=$PATH: <path_to_binary>' >> ~/.bashrc
-. ~/.bashrc
-```
-
-### Example
-If your binary is in your ```/home/username/Downloads/shi7en_trimmer```, you can add the binary to your path in this way:
-```
-echo 'PATH=$PATH:/home/username/Downloads/shi7en_trimmer' >> ~/.bashrc
-.~/.bashrc
-```
-
-Now that everything is installed, the command 'shi7en' will be on your path when the conda environment is active. Here is the helpfile for the command:
-
-```
-$ shi7en --help
-shi7en --help
-usage: shi7en -i <input> -o <output> -t_trim <threads>...
-
-This is the commandline interface for shi7en
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --gotta_split {True,False}
-                        Split one giant fastq (well, one pair -- an R1 and R2)
-                        into samples
-  --debug               Enable debug (default: Disabled)
-  --adaptor {None,Nextera,TruSeq3,TruSeq2,TruSeq3-2}
-                        Set the type of the adaptor (default: None)
-  -SE                   Run in Single End mode (default: Disabled)
-  --flash {True,False}  Enable (True) or Disable (False) FLASH stiching
-                        (default: True)
-  --trim {True,False}   Enable (True) or Disable (False) the TRIMMER (default:
-                        True)
-  --allow_outies {True,False}
-                        Enable (True) or Disable (False) the "outie"
-                        orientation (default: True)
-  --convert_fasta {True,False}
-                        Enable (True) or Disable (False) the conversion of
-                        FASTQS to FASTA (default: True)
-  --combine_fasta {True,False}
-                        Enable (True) or Disable (False) the FASTA append mode
-                        (default: True)
-  --shell               Use shell in Python system calls, NOT RECOMMENDED
-                        (default: Disabled)
-  -i INPUT, --input INPUT
-                        Set the directory path of the fastq directory
-  -o OUTPUT, --output OUTPUT
-                        Set the directory path of the output (default: cwd)
-  -t THREADS, --threads THREADS
-                        Set the number of threads (default: 4)
-  -m MIN_OVERLAP, --min_overlap MIN_OVERLAP
-                        Set the minimum overlap length between two reads. If
-                        V4 set to 285 (default: 20)
-  -M MAX_OVERLAP, --max_overlap MAX_OVERLAP
-                        Set the maximum overlap length between two reads. If
-                        V4 set to 300 (default: 700)
-  -trim_l TRIM_LENGTH, --trim_length TRIM_LENGTH
-                        Set the trim length (default: 150)
-  -trim_q TRIM_QUAL, --trim_qual TRIM_QUAL
-                        Set the trim qual (default: 20)
-
-```

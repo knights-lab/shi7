@@ -300,7 +300,7 @@ def match_pairs(path_fastqs, doSE):
                 matched = matched + 1
             if matched == nfiles // 2: 
                 if doSE: 
-                    logging.warning("WARNING: SE is toggled on apparently paired reads.")
+                    logging.warning("Note: match_pairs discovered apparently paired reads.")
                     if nfiles % 2: neworig = sorted(path_fastqs)
                 return [neworig, p1, p2, nwhere]
     if not doSE: raise ValueError("ERROR: No known pattern reliably distinguishes mate pairs.")
@@ -309,14 +309,15 @@ def match_pairs(path_fastqs, doSE):
 
 def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
     nfiles = len(snames)
-    ctr = 0
+    ctr = plen = nmatches = 0
     Names = []
     Rep2 = ["_R1","_R2"]
     which = delimCtr[2]
     oset = set(snames)
     ambig = len(snames) > len(oset)
-    plen = len(delimCtr[0])
-    nmatches = len(which)
+    if (delimCtr[0]):
+        plen = len(delimCtr[0])
+        nmatches = len(which)
     if ambig or not doSE:
         for i in range(0,nfiles):
             n = snames[i] 

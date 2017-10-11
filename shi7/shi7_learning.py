@@ -99,7 +99,7 @@ def check_sequence_name(path_R1, path_R2):
 def detect_paired_end(path_fastqs):
     path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq')]
     if len(path_fastqs) % 2 == 1: return False, path_fastqs
-    pair_obj = match_pairs(path_fastqs, False)
+    pair_obj = match_pairs(path_fastqs, True)
     path_fastqs = pair_obj[0]
     if pair_obj[1]==None: return False, pair_obj
     
@@ -239,7 +239,11 @@ def trimmer_learning(flash_output_filenames):
     logging.info('filter_q: %d' % (filter_q_sum/totbases))
     logging.info('trim_q: %d' % (trim_q_sum/tottrim))
 
-    return math.floor(filter_q_sum/totbases), math.floor(trim_q_sum/tottrim)-3
+    filter_q = math.floor(filter_q_sum/totbases)
+    trim_q = math.floor(trim_q_sum/tottrim)-1
+    trim_q = trim_q if trim_q > filter_q - 3 else filter_q - 3
+
+    return filter_q, trim_q
 
 def template_input(input):
     input = os.path.abspath(input)
