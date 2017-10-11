@@ -357,9 +357,11 @@ def main():
         cv, mean = flash_check_cv(stitched_path)
         if cv < 0.1:
             logging.info("CV: %f, Mean: %f, Avlen: %f" % (cv, mean, avlen))
+            if avlen > mean: avlen = mean
             mr = math.ceil(cv*mean)
             logging.info("SD was: %d" % mr)
             minstitch, maxstitch = int(2*avlen - mean-mr), int(2*avlen - mean+mr)
+            if minstitch < 8: minstitch = 8
             logging.info("Amplicon mode: stitch range [%d, %d]" % (minstitch, maxstitch))
             results, addon = template_cv(minstitch, maxstitch)
             logging.info(results)
