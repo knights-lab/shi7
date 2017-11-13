@@ -29,6 +29,7 @@ def make_arg_parser():
     return parser
 
 # template.format(input=input, adapters=adapters)
+# template.format(input=input, adapters=adapters)
 
 def subsample_fastqs(path_fastqs, num_files=10, num_sequences=1000):
     for i, path_fastq in enumerate(path_fastqs):
