@@ -64,6 +64,7 @@ def make_arg_parser():
     return parser
 
 
+
 def run_command(cmd, shell=False):
     """
     Run prepared behave command in shell and return its output.
@@ -282,7 +283,7 @@ def match_pairs(path_fastqs, doSE):
                     where.append(Ixs[k])
                     matched = matched + 1
                     break
-        if matched == nfiles // 2:
+        if matched > 0 and matched == nfiles // 2:
             matched = 0
             minp = min(where) 
             plen = len(p1)
@@ -340,7 +341,7 @@ def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
 
     if (len(Names) > len(set(Names))):
         raise ValueError('ERROR: processed file names are not unique.')
-    Names = [os.path.join(subdir,n) for n in Names]
+    Names = [os.path.abspath(os.path.join(subdir,n)) for n in Names]
     for i in range(0,nfiles): os.symlink(orig_paths[i],Names[i])
     return Names
 
@@ -355,8 +356,8 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Perform validation of input parameters
 
-    outdir = os.path.join(args.output)
-    tmpdir = os.path.join(outdir,"temp")
+    outdir = os.path.abspath(os.path.join(args.output))
+    tmpdir = os.path.abspath(os.path.join(outdir,"temp"))
     if not os.path.exists(args.input):
         raise ValueError('ERROR: Input directory %s doesn\'t exist!' % args.input)
 
@@ -417,6 +418,7 @@ def main():
     # Prepare file paths/names for subsequent processing
 
     path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq') or f.endswith('fq')]
+    path_fastqs = [os.path.abspath(f) for f in path_fastqs]
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Match pairs appropriately
@@ -425,9 +427,9 @@ def main():
     if (not args.single_end and pp_paths[1]==None): 
         raise ValueError("No pattern found for distinguishing mate pairs. Try -SE")
     logging.info("Detected pairs match on delimiter %s" % pp_paths[1])
-    path_fastqs = pp_paths[0]
+    path_fastqs = [os.path.abspath(p) for p in pp_paths[0]]
     snames = strip_delim(path_fastqs, args.strip_delim)
-    link_outdir = os.path.join(tmpdir, 'link')
+    link_outdir = os.path.abspath(os.path.join(tmpdir, 'link'))
     os.makedirs(link_outdir)
     path_fastqs = link_manicured_names(path_fastqs, snames, link_outdir, args.single_end, pp_paths[1:])
     if not args.debug:
@@ -439,7 +441,7 @@ def main():
     # TODO: Filename to samplename map?
 
     if args.adaptor and args.adaptor != str(None):
-        axe_output = os.path.join(tmpdir, 'axe')
+        axe_output = os.path.abspath(os.path.join(tmpdir, 'axe'))
         os.makedirs(axe_output)
         if args.single_end:
             path_fastqs = axe_adaptors_single_end(path_fastqs, axe_output, args.adaptor, threads=args.threads, shell=args.shell)
@@ -453,7 +455,7 @@ def main():
     # FLASH
     if args.flash:
         if not args.single_end:
-            flash_output = os.path.join(tmpdir, 'flash')
+            flash_output = os.path.abspath(os.path.join(tmpdir, 'flash'))
             os.makedirs(flash_output)
             flash_output_str = flash_part1(path_fastqs, flash_output, args.max_overlap, args.min_overlap, args.allow_outies, threads=args.threads, shell=args.shell)
             path_fastqs = flash_part2(flash_output_str, flash_output)
@@ -467,7 +469,7 @@ def main():
     # Trimmer
 
     if args.trim:
-        trimmer_output = os.path.join(tmpdir, 'trimmer')
+        trimmer_output = os.path.abspath(os.path.join(tmpdir, 'trimmer'))
         os.makedirs(trimmer_output)
         path_fastqs = trimmer(path_fastqs, trimmer_output, args.filter_length, args.trim_qual, args.filter_qual, threads=args.threads, shell=args.shell)
         if not args.debug:
@@ -479,7 +481,7 @@ def main():
 
     if args.convert_fasta:
         drop_r2 = args.drop_r2
-        convert_output = os.path.join(tmpdir, 'convert')
+        convert_output = os.path.abspath(os.path.join(tmpdir, 'convert'))
         os.makedirs(convert_output)
         if not args.debug and args.combine_fasta:
             path_fastqs = convert_combine_fastqs(path_fastqs, convert_output, drop_r2=drop_r2)
@@ -491,7 +493,7 @@ def main():
         logging.info('Convert ' + ('and combine ' if args.combine_fasta else '') + 'FASTQs done!')
 
     for file in path_fastqs:
-        dest = os.path.join(outdir, os.path.basename(file))
+        dest = os.path.abspath(os.path.join(outdir, os.path.basename(file)))
         if os.path.exists(dest):
             os.remove(dest)
         shutil.move(file, outdir)
