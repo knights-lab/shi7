@@ -20,6 +20,9 @@ Confused or new to UNIX? Follow the super-specific directions below if you can't
 ### Here are some super specific installation instructions for the portable install:
 For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open terminal and type `cd` and optionally enter a directory where you want to install SHI7).
 
+0. Have python (you will most likely have this already!) and importantly (at least on MacOS) the Java SDK:  http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+(If you are installing java for the first time, you MUST REBOOT to have it be recognized).
+
 1. Download and unpack the latest release: 
  ```
 wget https://github.com/knights-lab/shi7/releases/download/v0.92/shi7_0.92a_linux_release.zip
