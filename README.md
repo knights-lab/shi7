@@ -4,7 +4,7 @@
 
 # Installation
 
-## The CONDA way (personal install)
+## The CONDA way (personal install), recommended for Linux or Windows WSL
 1. Follow steps 1 and 2 of https://bioconda.github.io/ (including installing MiniConda 3.6 if you don't have miniconda)
 2. Do this in a terminal:
 ```
@@ -15,26 +15,33 @@ source activate shi7
 ## Alternative portable/server install:
 Grab the latest [release](https://github.com/knights-lab/shi7/releases) package (not source), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
 
-Confused or new to UNIX? Follow the super-specific directions below if you can't/won't follow the CONDA route above:
+Confused or new to UNIX? Or something not working right? Try following the super-specific directions below:
 
 ### Here are some super specific installation instructions for the portable install:
-For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open terminal and type `cd` and optionally enter a directory where you want to install SHI7).
+For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open a (bash) terminal and optionally enter a directory where you want to install SHI7 with `cd`).
 
 0. Have python (you will most likely have this already!) and importantly (at least on MacOS) the Java SDK:  http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 (If you are installing java for the first time, you MUST REBOOT to have it be recognized).
 
 1. Download and unpack the latest release: 
+(if on MacOS, replace the word "linux" with "mac" near the end of the wget link!)
  ```
-wget https://github.com/knights-lab/shi7/releases/download/v0.92/shi7_0.92a_linux_release.zip
-unzip shi7_0.92a_linux_release.zip
-chmod +x shi7_0.92_linux_release/*
+wget https://github.com/knights-lab/shi7/releases/download/v0.9.5/shi7_0.9.3c_linux_release.zip
+unzip shi7_0.9.3c_*_release.zip
+chmod +x shi7_0.9.3c_*_release/*
  ```
 2. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
+On Linux:
 ```
-echo "PATH=$PWD/shi7_0.92_linux_release:$PATH" >> ~/.bashrc
+echo "PATH=$PWD/shi7_0.9.3c_linux_release:$PATH" >> ~/.bashrc
 ```
-3. (Optional) Reload your terminal environment and test shi7.py:
+On Mac:
 ```
+echo "PATH=$PWD/shi7_0.9.3c_mac_release:$PATH" >> ~/.bash_profile
+```
+3. Reload your terminal environment and test shi7.py:
+```
+. ~/.bash_profile
 . ~/.bashrc
 shi7.py -h
 ```
