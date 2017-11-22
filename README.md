@@ -27,17 +27,17 @@ For our purposes, we will install and use SHI7 on an interactive shell on our su
 (if on MacOS, replace the word "linux" with "mac" near the end of the wget link!)
  ```
 wget https://github.com/knights-lab/shi7/releases/download/v0.9.5/shi7_0.9.3c_linux_release.zip
-unzip shi7_0.9.3c_*_release.zip
-chmod +x shi7_0.9.3c_*_release/*
+unzip shi7_0.9.3_*_release.zip
+chmod +x shi7_0.9.3_*_release/*
  ```
 2. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
 On Linux:
 ```
-echo "PATH=$PWD/shi7_0.9.3c_linux_release:$PATH" >> ~/.bashrc
+echo "PATH=$PWD/shi7_0.9.3_linux_release:$PATH" >> ~/.bashrc
 ```
 On Mac:
 ```
-echo "PATH=$PWD/shi7_0.9.3c_mac_release:$PATH" >> ~/.bash_profile
+echo "PATH=$PWD/shi7_0.9.3_mac_release:$PATH" >> ~/.bash_profile
 ```
 3. Reload your terminal environment and test shi7.py:
 ```
