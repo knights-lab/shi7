@@ -337,7 +337,7 @@ def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
         for x in range(nfiles):
             bn = os.path.basename(orig_paths[x])
             logging.info("%s --> %s" % (bn,Names[x]))
-    else: Names = snames
+    else: Names = [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')])+".fq" for n in snames]
 
     if (len(Names) > len(set(Names))):
         raise ValueError('ERROR: processed file names are not unique.')
