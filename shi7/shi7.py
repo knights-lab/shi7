@@ -64,7 +64,6 @@ def make_arg_parser():
     return parser
 
 
-
 def run_command(cmd, shell=False):
     """
     Run prepared behave command in shell and return its output.
@@ -167,8 +166,6 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
 
 
 def flash_part1(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
-    # TODO: Can we run a two-pass approach?
-    # TODO: Wiki table and hard code most common presets
     flash_output_str = []
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
@@ -196,14 +193,21 @@ def flash_part2(flash_output, output_path, log = True):
     return output_filenames
 
 
-def trimmer(input_fastqs, output_path, filter_length, trim_qual, filter_qual, threads=1, shell=False):
+def trimmer(input_fastqs, output_path, filter_length, trim_qual, filter_qual, SE=True, threads=1, shell=False):
+    path_R1_fastqs = input_fastqs
+    path_R2_fastqs = None
+    if not SE: path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
     output_filenames = []
-    for path_input_fastq in input_fastqs:
-        fq_name = os.path.basename(path_input_fastq)
-        path_output_fastq = os.path.join(output_path, fq_name)
+    for index, path_input_fastq in enumerate(path_R1_fastqs):
+        path_output_fastq = os.path.join(output_path, os.path.basename(path_input_fastq))
+        path_output_fastq = path_output_fastq[:(-3 if SE else -6)]
         shi7_cmd = ['shi7_trimmer', path_input_fastq, path_output_fastq, filter_length, trim_qual, 'FLOOR', 5, 'ASS_QUALITY', filter_qual]
+        if not SE: shi7_cmd += ['R2', path_R2_fastqs[index]]
         logging.info(run_command(shi7_cmd, shell=shell))
-        output_filenames.append(path_output_fastq)
+        if SE: output_filenames.append(path_output_fastq+".fq")
+        else:
+            output_filenames.append(path_output_fastq+".R1.fq")
+            output_filenames.append(path_output_fastq+".R2.fq")
     return output_filenames
 
 
@@ -471,7 +475,7 @@ def main():
     if args.trim:
         trimmer_output = os.path.abspath(os.path.join(tmpdir, 'trimmer'))
         os.makedirs(trimmer_output)
-        path_fastqs = trimmer(path_fastqs, trimmer_output, args.filter_length, args.trim_qual, args.filter_qual, threads=args.threads, shell=args.shell)
+        path_fastqs = trimmer(path_fastqs, trimmer_output, args.filter_length, args.trim_qual, args.filter_qual, args.single_end or args.flash, threads=args.threads, shell=args.shell)
         if not args.debug:
             whitelist(tmpdir, path_fastqs)
         logging.info('Final quality trimming complete!')
