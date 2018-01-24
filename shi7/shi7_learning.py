@@ -28,9 +28,6 @@ def make_arg_parser():
     parser.set_defaults()
     return parser
 
-# template.format(input=input, adapters=adapters)
-# template.format(input=input, adapters=adapters)
-
 def subsample_fastqs(path_fastqs, num_files=10, num_sequences=1000):
     for i, path_fastq in enumerate(path_fastqs):
         with open(path_fastq) as fastq_inf:
@@ -51,14 +48,10 @@ def get_seq_length_qual_scores(path_fastqs, output_path, num_files=10, num_seque
     quality_sum = 0
     num_sequences = 0.
 
-    # sequences = []
-    # qualities = []
     for fastq_path, fastq_gen in zip(path_fastqs, subsampled_fastqs):
         with open(os.path.join(output_path, os.path.basename(fastq_path)), 'w') as outf:
             for header, sequence, quality in fastq_gen:
                 outf.write("@%s\n%s\n+\n%s\n" % (header, sequence, quality))
-                # sequences.append(sequences)
-                # qualities.append(qualities)
                 sequence_len_sum += len(sequence)
                 quality_sum += sum([ord(i) for i in quality])
                 num_sequences += 1.
@@ -107,7 +100,6 @@ def remove_directory_contents(path):
         os.remove(os.path.join(path, f))
 
 def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path, threads):
-    #print("What axe is working with:",path_subsampled_fastqs)
     adapters = ['TruSeq2', 'TruSeq3', 'TruSeq3-2', 'Nextera']
     threads = min(threads, multiprocessing.cpu_count(), 16)
     original_size = get_directory_size(os.path.dirname(path_subsampled_fastqs[0]))
@@ -133,14 +125,12 @@ def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path, threads
             files = axe_adaptors_paired_end(path_subsampled_fastqs, output_path, best_adap, threads, shell=False)
         else:
             files = axe_adaptors_single_end(path_subsampled_fastqs, output_path, best_adap, threads, shell=False)
-        #print(str(files))
         return best_adap, best_size, files
     else:
         return None, original_size, path_subsampled_fastqs
 
 
 def flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_path, threads):
-    #print('adapter_output_filenames: ',adapter_output_filenames)
     flash_output_str = flash_part1(adapter_output_filenames, flash_output_path, max_overlap=700, \
         min_overlap=10, allow_outies=True, threads=threads, shell=False)
 
@@ -149,7 +139,6 @@ def flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_pat
         flash_str_list = flash_out.strip().split('\n')
         outies_info = flash_str_list[-8]
         outies_percent = float(outies_info[outies_info.find('(')+1:outies_info.find('%')])
-        #print('outies_percent:', outies_percent)
         if outies_percent >= 15:
             allow_outies_count += 1
 
@@ -166,7 +155,6 @@ def flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_pat
 
 def flash_check_cv(flash_output_path):
     hist_files = [os.path.join(flash_output_path, f) for f in os.listdir(flash_output_path) if f.endswith('.hist')]
-    #print("HIST FILES:",hist_files)
     total_cv = total_mean = 0
     for f in hist_files:
         with open(f) as inf:
@@ -180,7 +168,6 @@ def flash_check_cv(flash_output_path):
                 sum = sum + row[0] * row[1]
                 x2f = x2f + row[0] * row[0] * row[1]
             mean = sum/cnt
-            #print("the mean is %f, x2f %f, sum %f, cnt %f, sum*sum/cnt %f" % (mean,x2f,sum,cnt,(sum*sum/cnt)))
             std = math.sqrt((x2f - sum*sum/cnt)/(cnt-1))
             cv = std/mean
             total_cv = total_cv + cv
@@ -258,10 +245,8 @@ def main():
     parser = make_arg_parser()
     args = parser.parse_args()
 
-    #learning_params = ['input_cmd', 'paired_end_cmd', 'output_cmd']
     learning_params = ["shi7.py"]
-    #learning_dict = dict(zip(learning_params, [""]*len(learning_params)))
-
+    
     input = os.path.abspath(args.input)
     output = os.path.abspath(args.output)
 
