@@ -246,6 +246,7 @@ def main():
     args = parser.parse_args()
 
     learning_params = ["shi7.py"]
+    learning_pretty = ["SHI7 version",VERSION]
     
     input = os.path.abspath(args.input)
     output = os.path.abspath(args.output)
@@ -309,6 +310,7 @@ def main():
     results, addon = template_paired_end(paired_end)
     logging.info(results)
     if addon: learning_params.extend(addon)
+    learning_pretty += ["Paired end",paired_end]
 
     # Detect adapters
     axe_adaptors_path = os.path.join(output, 'temp', 'axe_adaptors')
@@ -317,6 +319,7 @@ def main():
     results, addon = template_choose_axe_adaptors(best_adap, best_size)
     logging.info(results)
     if addon: learning_params.extend(addon)
+    learning_pretty += ["Detected adaptors",best_adap]
 
     # Detect output folder
     results, addon = template_output(output)
@@ -332,16 +335,21 @@ def main():
     results, addon = template_flash(stitches, do_outies)
     logging.info(results)
     if addon: learning_params.extend(addon)
+    if paired_end:
+        learning_pretty += ["Stitching",stitches]
+        if stitches: learning_pretty += ["Outies allowed",do_outies]
 
     filt_q, trim_q = trimmer_learning(fastq_paths)
     results, addon = template_trim(int(filt_q), int(trim_q))
     logging.info(results)
     if addon: learning_params.extend(addon)
+    learning_pretty += ["Filter quality",filt_q,"Trimming quality",trim_q]
 
     # Check whether to implement stitching bounds
     if stitches:
         cv, mean = flash_check_cv(stitched_path)
         if cv < 0.1:
+            learning_pretty += ["Amplicon mode",True]
             logging.info("CV: %f, Mean: %f, Avlen: %f" % (cv, mean, avlen))
             if avlen > mean: avlen = mean
             mr = math.ceil(cv*mean)
@@ -352,12 +360,19 @@ def main():
             results, addon = template_cv(minstitch, maxstitch)
             logging.info(results)
             if addon: learning_params.extend(addon)
+            learning_pretty += ["Amplicon stitch minimum",minstitch]
+            learning_pretty += ["Amplicon stitch maximum",maxstitch]
+        else: learning_pretty += ["Amplicon mode",False]
 
     #print(str(learning_params))
     with open(os.path.join(args.output, "shi7_cmd.sh"), "w") as output:
         cmd = " ".join(learning_params)
         output.write(cmd)
         print(cmd)
+    
+    with open(os.path.join(args.output, "learning_params.txt"),"w") as output:
+        for ix in range(0,len(learning_pretty),2):
+            output.write(str(learning_pretty[ix]) + "\t" + str(learning_pretty[ix+1]) + "\n")
 
     if not args.debug:
         shutil.rmtree(os.path.join(args.output, 'temp'))
