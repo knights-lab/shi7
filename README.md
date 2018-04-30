@@ -93,5 +93,5 @@ Then, using `strip_underscore True` will return processed reads with just the sa
 # Cite
 
 To cite SHI7:
-`Al-Ghalith GA, Ang K, Hillmann B, Shields-Cutler R, Knights D. (2017). SHI7: A Streamlined short-read iterative trimming pipeline. DOI:10.5281/zenodo.808832`  [![DOI](https://zenodo.org/badge/66102758.svg)](https://zenodo.org/badge/latestdoi/66102758)
+Please cite the article published here: http://msystems.asm.org/content/3/3/e00202-17 
 
