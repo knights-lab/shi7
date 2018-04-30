@@ -95,3 +95,5 @@ Then, using `strip_underscore True` will return processed reads with just the sa
 To cite SHI7:
 Please cite the article published here: http://msystems.asm.org/content/3/3/e00202-17 
 
+Al-Ghalith, Gabriel A., Benjamin Hillmann, Kaiwei Ang, Robin Shields-Cutler, and Dan Knights. 2018. “SHI7 Is a Self-Learning Pipeline for Multipurpose Short-Read DNA Quality Control.” mSystems 3 (3). American Society for Microbiology Journals: e00202–17. 
+
