@@ -18,7 +18,7 @@ Grab the latest [release](https://github.com/knights-lab/shi7/releases) package 
 Confused or new to UNIX? Or something not working right? Try following the super-specific directions below:
 
 ### Here are some super specific installation instructions for the portable install:
-For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open a (bash) terminal and optionally enter a directory where you want to install SHI7 with `cd`).
+For our purposes, we will install and use SHI7 on an interactive shell on our supercomputer, MSI, like so: `isub -n nodes=1:ppn=16 -m 22GB -w 12:00:00` (skip this if installing on your own computer, just open a (bash) terminal and optionally enter a directory where you want to install SHI7 with `cd`). You'll want to update the URLs below with the latest version on the release page above!
 
 0. Have python (you will most likely have this already!) and importantly (at least on MacOS) the Java SDK:  http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 (If you are installing java for the first time, you MUST REBOOT to have it be recognized).
@@ -26,18 +26,18 @@ For our purposes, we will install and use SHI7 on an interactive shell on our su
 1. Download and unpack the latest release: 
 (if on MacOS, replace the word "linux" with "mac" near the end of the wget link!)
  ```
-wget https://github.com/knights-lab/shi7/releases/download/v0.9.5/shi7_0.9.3c_linux_release.zip
-unzip shi7_0.9.3_*_release.zip
-chmod +x shi7_0.9.3_*_release/*
+wget https://github.com/knights-lab/shi7/releases/download/v0.9.9/shi7_0.9.9_linux_release.zip
+unzip shi7_*_release.zip
+chmod +x shi7_*_linux_release/*
  ```
 2. Add SHI7 binaries to your PATH so they can be called on the commandline anywhere:
 On Linux:
 ```
-echo "PATH=$PWD/shi7_0.9.3_linux_release:$PATH" >> ~/.bashrc
+echo "PATH=$PWD/shi7_0.9.9_linux_release:$PATH" >> ~/.bashrc
 ```
 On Mac:
 ```
-echo "PATH=$PWD/shi7_0.9.3_mac_release:$PATH" >> ~/.bash_profile
+echo "PATH=$PWD/shi7_0.9.9_mac_release:$PATH" >> ~/.bash_profile
 ```
 3. Reload your terminal environment and test shi7.py:
 ```
