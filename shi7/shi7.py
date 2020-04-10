@@ -369,6 +369,7 @@ def main():
     parser = make_arg_parser()
     args = parser.parse_args()
 
+
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Perform validation of input parameters
 
@@ -397,6 +398,12 @@ def main():
         if args.gotta_split_output:
             if not os.path.exists(args.gotta_split_output):
                 raise ValueError('ERROR: Gotta_split output directory %s doesn\'t exist!' % args.gotta_split_output)
+
+    # Check the filter length
+    if args.filter_length < 50:
+        if args.filter_length < 5:
+            raise ValueError("ERROR: Must set the filter length to be at least greater than 5.")
+        logging.warning("WARNING: Setting a filter length of less than 50 is not recommended.")
 
     # Initialize the logging file
     logging.basicConfig(filename=os.path.join(outdir, 'shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
