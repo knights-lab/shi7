@@ -1,4 +1,4 @@
-from shi7.learning import read_fastq
+from shi7.shi7 import read_fastq
 import os
 import unittest
 

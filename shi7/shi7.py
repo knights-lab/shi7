@@ -9,6 +9,7 @@ import shutil
 import multiprocessing
 import pkg_resources
 from datetime import datetime
+from itertools import zip_longest
 
 import logging
 
@@ -100,32 +101,38 @@ def whitelist(dir, whitelist):
                     os.remove(os.path.join(root, file))
 
 
+def grouper(iterable, n, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # taken from itertools recipes: https://docs.python.org/3/library/itertools.html#itertools-recipes
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
+
+
 def read_fastq(fh):
     # Assume linear FASTQS
     count = 0
-    while True:
-        title = next(fh)
+    for (title, sequence, garbage, qualities) in grouper(fh, 4, fillvalue=""):
         count += 1
-        while title[0] != '@':
-            title = next(fh)
         # Record begins
         if title[0] != '@':
             raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - Title line does not begin with "@" symbol - error on line' + str(count) + '.')
         title = title[1:].strip()
-        sequence = next(fh).strip()
+        sequence = sequence.strip()
         count += 1
-        garbage = next(fh).strip()
+        garbage = garbage.strip()
         count += 1
         if garbage[0] != '+':
             raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - strand line does not contain "+" symbol on line' + str(count) + '.')
-        qualities = next(fh).strip()
+        qualities = qualities.strip()
         count += 1
         if len(qualities) != len(sequence):
             raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - Sequence length does not equal quality score length on line ' + str(count) + '.')
         yield title, sequence, qualities
 
+
 def split_fwd_rev(paths):
-    if len(paths) % 2: 
+    if len(paths) % 2:
         raise ValueError('Sequence number is uneven; these aren\'t pairs!')
     return paths[::2], paths[1::2]
 
@@ -238,7 +245,7 @@ def convert_combine_fastqs(input_fastqs, output_path, drop_r2=False):
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
                     for i, (title, seq, quals) in enumerate(gen_fastq):
-                        if drop_r2: 
+                        if drop_r2:
                             if basename.endswith('.R2'): continue
                             outf_fasta.write('>%s_%i %s\n%s\n' % (basename[:-3], i, title, seq))
                         else: outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
@@ -271,7 +278,7 @@ def strip_delim(path_fastqs, token):
 def match_pairs(path_fastqs, doSE):
     orig = set([os.path.basename(p) for p in path_fastqs])
     nfiles = len(path_fastqs)
-    if not doSE and nfiles % 2: 
+    if not doSE and nfiles % 2:
         raise ValueError("ERROR: Odd number of fastq files in paired-end mode.")
     Pat1 = [".R1","_R1","-R1","R1",".1","_1","-1",".0","_0","-0",".F","_F","-F"]
     Pat2 = [".R2","_R2","-R2","R2",".2","_2","-2",".1","_1","-1",".R","_R","-R"]
@@ -294,7 +301,7 @@ def match_pairs(path_fastqs, doSE):
                     break
         if matched > 0 and matched == nfiles // 2:
             matched = 0
-            minp = min(where) 
+            minp = min(where)
             plen = len(p1)
             neworig = []
             nwhere = []
@@ -308,8 +315,8 @@ def match_pairs(path_fastqs, doSE):
                 neworig.append(trans)
                 nwhere += [ix,ix]
                 matched = matched + 1
-            if matched == nfiles // 2: 
-                if doSE: 
+            if matched == nfiles // 2:
+                if doSE:
                     logging.warning("Note: match_pairs discovered apparently paired reads.")
                     if nfiles % 2: neworig = sorted(path_fastqs)
                 return [neworig, p1, p2, nwhere]
@@ -330,7 +337,7 @@ def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
         nmatches = len(which)
     if ambig or not doSE:
         for i in range(0,nfiles):
-            n = snames[i] 
+            n = snames[i]
             p = delimCtr[ctr]
             ix = which[i] if i < nmatches else -1
             #print("File %d ('%s') supposedly has delim %s at pos %d" % (i,n,p,ix))
@@ -395,7 +402,7 @@ def main():
     logging.basicConfig(filename=os.path.join(outdir, 'shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     logging.info('SHI7 invocation: %s' % " ".join(sys.argv))
 
-    if args.drop_r2 and args.flash: 
+    if args.drop_r2 and args.flash:
         logging.warning('WARNING: Not dropping R2 reads because flash is enabled')
         args.drop_r2 = False
 
@@ -408,7 +415,7 @@ def main():
         os.makedirs(tmpdir)
     else:
         os.makedirs(tmpdir)
-    
+
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Demuliplex reads
@@ -433,7 +440,7 @@ def main():
     # Match pairs appropriately
 
     pp_paths = match_pairs(path_fastqs, args.single_end)
-    if (not args.single_end and pp_paths[1]==None): 
+    if (not args.single_end and pp_paths[1]==None):
         raise ValueError("No pattern found for distinguishing mate pairs. Try -SE")
     logging.info("Detected pairs match on delimiter %s" % pp_paths[1])
     path_fastqs = [os.path.abspath(p) for p in pp_paths[0]]
@@ -444,7 +451,7 @@ def main():
     if not args.debug:
         whitelist(link_outdir, path_fastqs)
 
-    
+
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # AXE_ADAPTORS
     # TODO: Filename to samplename map?
