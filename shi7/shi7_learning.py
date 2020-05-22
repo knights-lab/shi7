@@ -10,21 +10,19 @@ import argparse
 import shutil
 import math
 from glob import glob
+import gzip
 
-from shi7 import __version__
-
-from shi7.shi7 import TRUE_FALSE_DICT, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, \
+from shi7 import VERSION, TRUE_FALSE_DICT, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, \
     flash_part2, split_fwd_rev, match_pairs, link_manicured_names
 
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7_learning',
-                                     usage='shi7_learning {version} -i <input> -o <output> ...'.format(version=__version__))
+                                     usage='shi7_learning v{version}\nshi7_learning.py -i <input> -o <output> ...'.format(version=VERSION))
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory OR oligos.txt if splitting', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
                         default=min(multiprocessing.cpu_count(), 16))
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
     parser.set_defaults()
     return parser
 
@@ -85,7 +83,7 @@ def check_sequence_name(path_R1, path_R2):
 
 
 def detect_paired_end(path_fastqs):
-    path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq')]
+    path_fastqs = [f for f in path_fastqs if f.endswith('.fastq') or f.endswith('.fq') or f.endswith('.fastq.gz') or f.endswith('.fq.gz')]
     if len(path_fastqs) % 2 == 1: return False, [path_fastqs, None, None, None]
     pair_obj = match_pairs(path_fastqs, True)
     path_fastqs = pair_obj[0]
@@ -268,7 +266,7 @@ def main():
         os.makedirs(os.path.join(args.output, 'temp'))
 
     
-    path_fastqs = [os.path.join(input, f) for f in os.listdir(input) if f.endswith('fastq') or f.endswith('fq')]
+    path_fastqs = [os.path.join(input, f) for f in os.listdir(input) if f.endswith('fastq') or f.endswith('fq') or f.endswith('fq.gz') or f.endswith('fastq.gz')]
 
     if len(path_fastqs) == 0:
         msg = "No FASTQS found in input folder {}".format(input)
@@ -287,13 +285,18 @@ def main():
     totbases = totseqs = 0
     for file in path_fastqs:
         basename = os.path.basename(file)
-        with open(file) as fastq_inf:
-            fastq_gen = read_fastq(fastq_inf)
-            with open(os.path.join(subsampled_fastq_path, basename), 'w') as outf:
-                for header, seq, quality in limit_fastq(fastq_gen):
-                    outf.write("@{header}\n{seq}\n+\n{quality}\n".format(header=header, seq=seq, quality=quality))
-                    totbases += len(seq)
-                    totseqs += 1
+        if(file.endswith('.fastq') or file.endswith('.fq')):
+            fastq_inf = open(file)
+        else:
+            fastq_inf = gzip.open(file, 'rt')
+        fastq_gen = read_fastq(fastq_inf)
+        if(basename.endswith('.gz')):
+            basename = basename[:-3]
+        with open(os.path.join(subsampled_fastq_path, basename), 'w') as outf:
+            for header, seq, quality in limit_fastq(fastq_gen):
+                outf.write("@{header}\n{seq}\n+\n{quality}\n".format(header=header, seq=seq, quality=quality))
+                totbases += len(seq)
+                totseqs += 1
     avlen = totbases/totseqs
     path_fastqs = glob(os.path.join(subsampled_fastq_path , "*"))
 
