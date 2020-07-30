@@ -246,7 +246,7 @@ def main():
     args = parser.parse_args()
 
     learning_params = ["shi7.py"]
-    learning_pretty = ["SHI7 version",VERSION]
+    learning_pretty = ["SHI7 version", __version__]
     
     input = os.path.abspath(args.input)
     output = os.path.abspath(args.output)
