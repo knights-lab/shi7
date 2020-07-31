@@ -9,11 +9,10 @@ import shutil
 import multiprocessing
 import pkg_resources
 from datetime import datetime
-from itertools import zip_longest
+import time
 
 import logging
-
-from shi7 import __version__
+import gzip
 
 TRUE_FALSE_DICT = {
               "true": True,
@@ -29,10 +28,11 @@ def convert_t_or_f(value):
     value = value.lower()
     return TRUE_FALSE_DICT[value]
 
+VERSION = "0.9.9 Portable"
 def make_arg_parser():
     # TODO: Preset modes will get precedence over default values, but lose to explicit settings from user
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7',
-                                     usage='shi7 %s -i <input> -o <output> ...' % __version__)
+                                     usage='shi7 v%s -i <input> -o <output> ...' % VERSION)
     parser.add_argument('--gotta_split', help='Split one giant fastq (or one pair of R1/R2) into 1 fastq per sample', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
     parser.add_argument('--gotta_split_output', help='output directory for the newly-split fastqs')
     parser.add_argument('--gotta_split_r1', help='r1 to split by sample names in oligos.txt')
@@ -61,7 +61,7 @@ def make_arg_parser():
     parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=32, type=int)
     parser.add_argument('--drop_r2', help='When combining FASTAs, drop R2 reads and remove "R1" from read name (default: False)', choices=[True, False], default='False', type=convert_t_or_f)
     parser.set_defaults(shell=False, single_end=False)
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
+
     return parser
 
 
@@ -101,35 +101,24 @@ def whitelist(dir, whitelist):
                     os.remove(os.path.join(root, file))
 
 
-def grouper(iterable, n, fillvalue=None):
-    "Collect data into fixed-length chunks or blocks"
-    # taken from itertools recipes: https://docs.python.org/3/library/itertools.html#itertools-recipes
-    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
-
-
 def read_fastq(fh):
     # Assume linear FASTQS
-    count = 0
-    for (title, sequence, garbage, qualities) in grouper(fh, 4, fillvalue=""):
-        count += 1
+    while True:
+        title = next(fh)
+        while title[0] != '@':
+            title = next(fh)
         # Record begins
         if title[0] != '@':
-            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - Title line does not begin with "@" symbol - error on line' + str(count) + '.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         title = title[1:].strip()
-        sequence = sequence.strip()
-        count += 1
-        garbage = garbage.strip()
-        count += 1
+        sequence = next(fh).strip()
+        garbage = next(fh).strip()
         if garbage[0] != '+':
-            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - strand line does not contain "+" symbol on line' + str(count) + '.')
-        qualities = qualities.strip()
-        count += 1
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
+        qualities = next(fh).strip()
         if len(qualities) != len(sequence):
-            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - Sequence length does not equal quality score length on line ' + str(count) + '.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         yield title, sequence, qualities
-
 
 def split_fwd_rev(paths):
     if len(paths) % 2:
@@ -148,12 +137,14 @@ def resolve_adapter_path(adaptor_name, paired_end):
 
 
 def axe_adaptors_single_end(input_fastqs, output_path, adapters, threads=1, shell=False):
-    # Can we automate the adaptors?
     adap_data = resolve_adapter_path(adapters, 0)
     output_filenames = []
+
     for fastq in input_fastqs:
         output_fastq = os.path.join(output_path, os.path.basename(fastq))
-        trim_cmd = ['trimmomatic', 'SE', '-threads', threads, fastq, output_fastq, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data]
+
+        trim_cmd = ['trimmomatic', 'SE', '-threads', threads, fastq, output_fastq, 'ILLUMINACLIP:%s:2:30:10:2:true' % adap_data] #why % adap_data?
+
         logging.info(run_command(trim_cmd, shell=shell))
         output_filenames.append(output_fastq)
     return output_filenames
@@ -178,18 +169,25 @@ def axe_adaptors_paired_end(input_fastqs, output_path, adapters, threads=1, shel
 
 
 def flash_part1(input_fastqs, output_path, max_overlap, min_overlap, allow_outies, threads=1, shell=False):
+    gz_file = False
+    gzipped_file = False
     flash_output_str = []
     path_R1_fastqs, path_R2_fastqs = split_fwd_rev(input_fastqs)
+
     for input_path_R1, input_path_R2 in zip(path_R1_fastqs, path_R2_fastqs):
         name_R1 = os.path.basename(input_path_R1)
         name_R2 = os.path.basename(input_path_R2)
         k = name_R1.rfind(".R1")
         new = name_R1[:k] + name_R2[k+3:]
+        #make sure that link and flash files are named the same
+        if(new.endswith('.gz')):
+            new = new[:-3]
+        elif(new.endswith('.gzip')):
+            new = new[:-5]
         flash_cmd = ['flash', input_path_R1, input_path_R2, '-o', new, '-d', output_path, '-M', max_overlap, '-m', min_overlap, '-t', threads]
         if allow_outies:
             flash_cmd.append('-O')
         flash_output_str.append(run_command(flash_cmd, shell=shell))
-
     return flash_output_str
 
 
@@ -222,25 +220,55 @@ def trimmer(input_fastqs, output_path, filter_length, trim_qual, filter_qual, SE
             output_filenames.append(path_output_fastq+".R2.fq")
     return output_filenames
 
-
 def convert_fastqs(input_fastqs, output_path):
     output_filenames = []
     for path_input_fastq in input_fastqs:
-        with open(path_input_fastq, 'r') as inf_fastq:
-            gen_fastq = read_fastq(inf_fastq)
-            outfile = os.path.basename(path_input_fastq)[:-3]
-            output_filename = os.path.join(output_path, outfile + '.fna')
-            with open(output_filename, 'w') as outf_fasta:
-                for title, seq, quals in gen_fastq:
-                    outf_fasta.write('>%s\n%s\n' % (title, seq))
-        output_filenames.append(output_filename)
+        #if gzipped file, call gzip.open and take off the gz or gzip extension
+        if(path_input_fastq.endswith('.gzip') or path_input_fastq.endswith('.gz')):
+            with gzip.open(path_input_fastq, 'r') as inf_fastq:
+                gen_fastq = read_fastq(inf_fastq)
+                if(path_input_fastq.endswith('.gzip')):
+                    outfile = os.path.basename(path_input_fastq)[:-5]
+                else:
+                    outfile = os.path.basename(path_input_fastq)[:-3]
+                output_filename = os.path.join(output_path, outfile + '.fna')
+                with open(output_filename, 'w') as outf_fasta:
+                    for title, seq, quals in gen_fastq:
+                        outf_fasta.write('>%s\n%s\n' % (title, seq))
+            output_filenames.append(output_filename)
+        else:
+            with open(path_input_fastq, 'r') as inf_fastq:
+                gen_fastq = read_fastq(inf_fastq)
+                outfile = os.path.basename(path_input_fastq)[:-3]
+                output_filename = os.path.join(output_path, outfile + '.fna')
+                with open(output_filename, 'w') as outf_fasta:
+                    for title, seq, quals in gen_fastq:
+                        outf_fasta.write('>%s\n%s\n' % (title, seq))
+            output_filenames.append(output_filename)
     return output_filenames
-
 
 def convert_combine_fastqs(input_fastqs, output_path, drop_r2=False):
     output_filename = os.path.join(output_path, 'combined_seqs.fna')
+    count = 0
     with open(output_filename, 'w') as outf_fasta:
         for path_input_fastq in input_fastqs:
+            if(path_input_fastq.endswith('.gzip') or path_input_fastq.endswith('.gz')):
+                count+=1
+
+                if(path_input_fastq.endswith('.gzip')): #taking off extension
+                    basename = os.path.basename(path_input_fastq)[:-5]
+                else:
+                    basename = os.path.basename(path_input_fastq)[:-3]
+
+                with gzip.open(path_input_fastq) as inf_fastq:
+                    gen_fastq = read_fastq(inf_fastq)
+
+                    for i, (title, seq, quals) in enumerate(gen_fastq):
+                        if drop_r2:
+                            if basename.endswith('.R2'): continue
+                            outf_fasta.write('>%s_%i %s\n%s\n' % (basename[:-3], i, title, seq))
+                        else: outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+            else:
                 basename = os.path.basename(path_input_fastq)[:-3]
                 with open(path_input_fastq) as inf_fastq:
                     gen_fastq = read_fastq(inf_fastq)
@@ -249,6 +277,7 @@ def convert_combine_fastqs(input_fastqs, output_path, drop_r2=False):
                             if basename.endswith('.R2'): continue
                             outf_fasta.write('>%s_%i %s\n%s\n' % (basename[:-3], i, title, seq))
                         else: outf_fasta.write('>%s_%i %s\n%s\n' % (basename, i, title, seq))
+
     return [output_filename]
 
 
@@ -323,9 +352,8 @@ def match_pairs(path_fastqs, doSE):
     if not doSE: raise ValueError("ERROR: No known pattern reliably distinguishes mate pairs.")
     return [path_fastqs, None, None, None]
 
-
 def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
-    nfiles = len(snames)
+    nfiles = len(orig_paths)
     ctr = plen = nmatches = 0
     Names = []
     Rep2 = ["_R1","_R2"]
@@ -340,7 +368,6 @@ def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
             n = snames[i]
             p = delimCtr[ctr]
             ix = which[i] if i < nmatches else -1
-            #print("File %d ('%s') supposedly has delim %s at pos %d" % (i,n,p,ix))
             if ix < 0 or len(n) <= ix + 3: Names.append(n[0:n.rfind('.')]+Rep2[ctr])
             else:
                 mate = n[0:ix]+delimCtr[not ctr]+n[ix+plen:]
@@ -349,11 +376,31 @@ def link_manicured_names(orig_paths, snames, subdir, doSE, delimCtr):
                 n = n[0:ix]+n[ix+plen:]
                 Names.append(n[0:n.rfind('.')]+Rep2[ctr])
             ctr = not ctr
-        Names = [re.sub('[^0-9a-zA-Z]+', '.', e)+".fq" for e in Names]
+        num = len(snames) #count how many files are in snames so we can split Names later one
+        for n in snames: #Assuming only possible files are .gz and .fastq
+            if n.endswith('.gz'):
+                Names += [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')]) + '.gz']
+            elif n.endswith('.gzip'):
+                Names += [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')]) + '.gzip']
+            elif(n.endswith('.fastq')):
+                Names += [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')]) + '.fastq']
+            elif(n.endswith('.fq')):
+                Names += [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')]) + '.fq']
+        Names = Names[num:] #takes out repeat file names
         for x in range(nfiles):
             bn = os.path.basename(orig_paths[x])
             logging.info("%s --> %s" % (bn,Names[x]))
-    else: Names = [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')])+".fq" for n in snames]
+    else:
+        for n in snames:
+        #following will add the appropriate extension to the file names
+            if(n.endswith('.gz')):
+                Names += [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')]) + '.gz']
+            elif(n.endswith('.gzip')):
+                Names += [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')]) + '.gzip']
+            elif(n.endswith('.fastq')):
+                Names += [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')]) + '.fastq']
+            elif(n.endswith('.fq')):
+                Names += [re.sub('[^0-9a-zA-Z]+', '.', n[0:n.rfind('.')]) + '.fq']
 
     if (len(Names) > len(set(Names))):
         raise ValueError('ERROR: processed file names are not unique.')
@@ -368,8 +415,6 @@ def main():
 
     parser = make_arg_parser()
     args = parser.parse_args()
-
-
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Perform validation of input parameters
 
@@ -398,12 +443,6 @@ def main():
         if args.gotta_split_output:
             if not os.path.exists(args.gotta_split_output):
                 raise ValueError('ERROR: Gotta_split output directory %s doesn\'t exist!' % args.gotta_split_output)
-
-    # Check the filter length
-    if args.filter_length < 50:
-        if args.filter_length < 5:
-            raise ValueError("ERROR: Must set the filter length to be at least greater than 5.")
-        logging.warning("WARNING: Setting a filter length of less than 50 is not recommended.")
 
     # Initialize the logging file
     logging.basicConfig(filename=os.path.join(outdir, 'shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -439,13 +478,11 @@ def main():
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Prepare file paths/names for subsequent processing
-
-    path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq') or f.endswith('fq')]
+    path_fastqs = [os.path.join(args.input, f) for f in os.listdir(args.input) if f.endswith('fastq') or f.endswith('fq') or f.endswith('fastq.gz') or f.endswith('fastq.gzip') or f.endswith('fq.gzip')]
     path_fastqs = [os.path.abspath(f) for f in path_fastqs]
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Match pairs appropriately
-
     pp_paths = match_pairs(path_fastqs, args.single_end)
     if (not args.single_end and pp_paths[1]==None):
         raise ValueError("No pattern found for distinguishing mate pairs. Try -SE")
@@ -462,12 +499,14 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # AXE_ADAPTORS
     # TODO: Filename to samplename map?
-
     if args.adaptor and args.adaptor != str(None):
         axe_output = os.path.abspath(os.path.join(tmpdir, 'axe'))
+
         os.makedirs(axe_output)
+
         if args.single_end:
             path_fastqs = axe_adaptors_single_end(path_fastqs, axe_output, args.adaptor, threads=args.threads, shell=args.shell)
+
         else:
             path_fastqs = axe_adaptors_paired_end(path_fastqs, axe_output, args.adaptor, threads=args.threads, shell=args.shell)
         if not args.debug:
@@ -476,6 +515,14 @@ def main():
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # FLASH
+
+
+
+
+
+
+    ###############ISSUE##############
+
     if args.flash:
         if not args.single_end:
             flash_output = os.path.abspath(os.path.join(tmpdir, 'flash'))
@@ -488,9 +535,21 @@ def main():
         else:
             logging.warning('Single End mode enabled. Skipping FLASH stitching.')
 
+
+
+
+
+
+
+
+
+
+
+
+
+
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Trimmer
-
     if args.trim:
         trimmer_output = os.path.abspath(os.path.join(tmpdir, 'trimmer'))
         os.makedirs(trimmer_output)
