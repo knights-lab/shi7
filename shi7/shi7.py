@@ -9,10 +9,13 @@ import shutil
 import multiprocessing
 import pkg_resources
 from datetime import datetime
+from itertools import zip_longest
 import time
 
 import logging
 import gzip
+
+from shi7 import __version__
 
 TRUE_FALSE_DICT = {
               "true": True,
@@ -28,11 +31,10 @@ def convert_t_or_f(value):
     value = value.lower()
     return TRUE_FALSE_DICT[value]
 
-VERSION = "0.9.9 Portable"
 def make_arg_parser():
     # TODO: Preset modes will get precedence over default values, but lose to explicit settings from user
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7',
-                                     usage='shi7 v%s -i <input> -o <output> ...' % VERSION)
+                                     usage='shi7 v%s -i <input> -o <output> ...' % __version__)
     parser.add_argument('--gotta_split', help='Split one giant fastq (or one pair of R1/R2) into 1 fastq per sample', dest='split', choices=[True,False], default='False', type=convert_t_or_f)
     parser.add_argument('--gotta_split_output', help='output directory for the newly-split fastqs')
     parser.add_argument('--gotta_split_r1', help='r1 to split by sample names in oligos.txt')
@@ -61,6 +63,7 @@ def make_arg_parser():
     parser.add_argument('-trim_q', '--trim_qual', help='Trim read ends until they reach trim_q (default: %(default)s)', default=32, type=int)
     parser.add_argument('--drop_r2', help='When combining FASTAs, drop R2 reads and remove "R1" from read name (default: False)', choices=[True, False], default='False', type=convert_t_or_f)
     parser.set_defaults(shell=False, single_end=False)
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
 
     return parser
 
@@ -117,7 +120,7 @@ def read_fastq(fh):
             raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
         qualities = next(fh).strip()
         if len(qualities) != len(sequence):
-            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - Title line does not begin with "@" symbol - error on line' + str(count) + '.')
         yield title, sequence, qualities
 
 def split_fwd_rev(paths):
@@ -443,6 +446,13 @@ def main():
         if args.gotta_split_output:
             if not os.path.exists(args.gotta_split_output):
                 raise ValueError('ERROR: Gotta_split output directory %s doesn\'t exist!' % args.gotta_split_output)
+                
+    # Check the filter length	
+    if args.filter_length < 50:	
+        if args.filter_length < 5:	
+            raise ValueError("ERROR: Must set the filter length to be at least greater than 5.")	
+        logging.warning("WARNING: Setting a filter length of less than 50 is not recommended.")	
+
 
     # Initialize the logging file
     logging.basicConfig(filename=os.path.join(outdir, 'shi7.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -517,12 +527,6 @@ def main():
     # FLASH
 
 
-
-
-
-
-    ###############ISSUE##############
-
     if args.flash:
         if not args.single_end:
             flash_output = os.path.abspath(os.path.join(tmpdir, 'flash'))
@@ -534,18 +538,6 @@ def main():
             logging.info('Stitching of paired ends with FLASH complete!')
         else:
             logging.warning('Single End mode enabled. Skipping FLASH stitching.')
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
