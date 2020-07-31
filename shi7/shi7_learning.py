@@ -11,18 +11,20 @@ import shutil
 import math
 from glob import glob
 import gzip
+from shi7 import __version__
 
-from shi7 import VERSION, TRUE_FALSE_DICT, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, \
+from shi7 import TRUE_FALSE_DICT, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, \
     flash_part2, split_fwd_rev, match_pairs, link_manicured_names
 
 def make_arg_parser():
     parser = argparse.ArgumentParser(description='This is the commandline interface for shi7_learning',
-                                     usage='shi7_learning v{version}\nshi7_learning.py -i <input> -o <output> ...'.format(version=VERSION))
+                                     usage='shi7_learning v{version}\nshi7_learning.py -i <input> -o <output> ...'.format(version=__version__))
     parser.add_argument('-i', '--input', help='Set the directory path of the fastq directory OR oligos.txt if splitting', required=True)
     parser.add_argument('-o', '--output', help='Set the directory path of the output (default: cwd)', default=os.getcwd())
     parser.add_argument('--debug', help='Retain all intermediate files (default: Disabled)', dest='debug', action='store_true')
     parser.add_argument('-t', '--threads', help='Set the number of threads (default: %(default)s)',
                         default=min(multiprocessing.cpu_count(), 16))
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
     parser.set_defaults()
     return parser
 
