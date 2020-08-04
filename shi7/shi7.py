@@ -102,26 +102,36 @@ def whitelist(dir, whitelist):
             for file in files:
                 if os.path.join(root, file) not in whitelist:
                     os.remove(os.path.join(root, file))
+                    
+def grouper(iterable, n, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # taken from itertools recipes: https://docs.python.org/3/library/itertools.html#itertools-recipes
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
 
 
 def read_fastq(fh):
     # Assume linear FASTQS
-    while True:
-        title = next(fh)
-        while title[0] != '@':
-            title = next(fh)
+    count = 0
+    for (title, sequence, garbage, qualities) in grouper(fh, 4, fillvalue=""):
+        count += 1
         # Record begins
         if title[0] != '@':
-            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
-        title = title[1:].strip()
-        sequence = next(fh).strip()
-        garbage = next(fh).strip()
-        if garbage[0] != '+':
-            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records.')
-        qualities = next(fh).strip()
-        if len(qualities) != len(sequence):
             raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - Title line does not begin with "@" symbol - error on line' + str(count) + '.')
+        title = title[1:].strip()
+        sequence = sequence.strip()
+        count += 1
+        garbage = garbage.strip()
+        count += 1
+        if garbage[0] != '+':
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - strand line does not contain "+" symbol on line' + str(count) + '.')
+        qualities = qualities.strip()
+        count += 1
+        if len(qualities) != len(sequence):
+            raise IOError('Malformed FASTQ files; verify they are linear and contain complete records - Sequence length does not equal quality score length on line ' + str(count) + '.')
         yield title, sequence, qualities
+
 
 def split_fwd_rev(paths):
     if len(paths) % 2:
