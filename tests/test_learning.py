@@ -1,4 +1,4 @@
-from shi7.learning import *
+from shi7.shi7_learning import *
 from shi7.shi7 import *
 import os
 import shutil
