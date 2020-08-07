@@ -35,4 +35,5 @@ jobs:
       run: |
         # python setup.py test
         python setup.py install
+        cd tests
         nosetests
