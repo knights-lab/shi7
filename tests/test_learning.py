@@ -84,21 +84,21 @@ if __name__ == '__main__':
     else:
         adapter_output_filenames = path_subsampled_fastqs
 
-    if detect_paired_end(path_subsampled_fastqs):
-        flash_vars = test_flash(adapter_output_filenames)
-        print(flash_vars)
-        if flash_vars[0]:   #if it is stitchable
-            flash_output_path = os.path.join("testfq", "temp", "flash")
-            if os.path.exists(flash_output_path):
-                shutil.rmtree(flash_output_path)
-                os.makedirs(flash_output_path)
-            if flash_vars[2] <= 0.1:
-                flash_output_str = flash_part1(adapter_output_filenames, flash_output_path, max_overlap=int(round(flash_vars[3])), min_overlap=int(round(flash_vars[4])), allow_outies=flash_vars[1], threads=threads, shell=False)
-            else:
-                flash_output_str = flash_part1(adapter_output_filenames, flash_output_path, max_overlap=700, min_overlap=20, allow_outies=flash_vars[2], threads=threads, shell=False)
-            flash_output_filenames = flash_part2(flash_output_str, flash_output_path)
-        else:
-            flash_output_filenames = adapter_output_filenames   #skip FLASH
-
-
-    test_trimmer(flash_output_filenames)
+#    if detect_paired_end(path_subsampled_fastqs):
+#        flash_vars = test_flash(adapter_output_filenames)
+#        print(flash_vars)
+#        if flash_vars[0]:   #if it is stitchable
+#            flash_output_path = os.path.join("testfq", "temp", "flash")
+#            if os.path.exists(flash_output_path):
+#                shutil.rmtree(flash_output_path)
+#                os.makedirs(flash_output_path)
+#            if flash_vars[2] <= 0.1:
+#                flash_output_str = flash_part1(adapter_output_filenames, flash_output_path, max_overlap=int(round(flash_vars[3])), min_overlap=int(round(flash_vars[4])), allow_outies=flash_vars[1], threads=threads, shell=False)
+#            else:
+#                flash_output_str = flash_part1(adapter_output_filenames, flash_output_path, max_overlap=700, min_overlap=20, allow_outies=flash_vars[2], threads=threads, shell=False)
+#            flash_output_filenames = flash_part2(flash_output_str, flash_output_path)
+#        else:
+#            flash_output_filenames = adapter_output_filenames   #skip FLASH
+#
+#
+#    test_trimmer(flash_output_filenames)
