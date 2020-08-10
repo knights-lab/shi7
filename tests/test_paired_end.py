@@ -1,4 +1,4 @@
-from shi7.learning import detect_paired_end
+from shi7.shi7_learning import detect_paired_end
 import os
 
 
