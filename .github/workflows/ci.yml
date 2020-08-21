@@ -20,11 +20,15 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
+    - name: miniconda handler
+      uses: goanpeca/setup-miniconda@v1
+      with:
+        auto-update-conda: true
+        python-version: 3.8
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install flake8 nose
-        curl -sSf https://repo.anaconda.com/miniconda/Miniconda3-latest-Linx-x86_64.sh | sh
         conda install -c bioconda trimmomatic
         conda install -c bioconda flash
         #    - name: Lint with flake8
@@ -38,6 +42,4 @@ jobs:
         # python setup.py test
         python setup.py install
         cd tests
-        conda init bash
-        conda activate base
         nosetests -v
