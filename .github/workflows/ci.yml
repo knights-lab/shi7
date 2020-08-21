@@ -40,6 +40,7 @@ jobs:
     - name: nosetests
       run: |
         # python setup.py test
+        conda activate base
         python setup.py install
         cd tests
         nosetests -v
