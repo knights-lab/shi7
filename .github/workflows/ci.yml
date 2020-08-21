@@ -38,4 +38,5 @@ jobs:
         # python setup.py test
         python setup.py install
         cd tests
+        conda activate base
         nosetests -v
