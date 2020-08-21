@@ -49,9 +49,9 @@ jobs:
       shell: bash -l {0}
       run: |
         # python setup.py test
-        conda info
-        conda list
-        trimmomatic -h
+        # conda info
+        # conda list
+        # trimmomatic -h
         #python setup.py install
         cd tests
         nosetests -v
