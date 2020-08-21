@@ -1,3 +1,5 @@
+![](workflows/build/badge.svg)
+
 # Prerequisites
 1. Python 2.7+
 2. Java
