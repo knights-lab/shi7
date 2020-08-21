@@ -39,13 +39,14 @@ def axe_adaptors(subsampled_fastqs):
 
 
 def flash(adapter_output_filenames):
+    threads = 1
     print('adapter_output_filenames:', adapter_output_filenames)
     return_vars = []
     flash_output_path = os.path.join("testfq", "temp", "flash")
     if os.path.exists(flash_output_path):
         shutil.rmtree(flash_output_path)
     os.makedirs(flash_output_path)
-    is_stitchable, allow_outies = flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_path)
+    is_stitchable, allow_outies = flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_path, threads)
     return_vars.append([is_stitchable, allow_outies])
     print('is stitchable:',is_stitchable)
     print('allow_outies:', allow_outies)
