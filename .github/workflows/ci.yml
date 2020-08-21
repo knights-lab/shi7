@@ -45,7 +45,7 @@ jobs:
       shell: bash -l {0}
       run: |
         # python setup.py test
-        #conda info
+        conda info
         #python setup.py install
         cd tests
         nosetests -v
