@@ -1,4 +1,4 @@
-![](workflows/build/badge.svg)
+![](https://github.com/knights-lab/shi7/workflows/build/badge.svg)
 
 # Prerequisites
 1. Python 2.7+
