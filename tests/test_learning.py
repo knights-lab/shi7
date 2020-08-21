@@ -32,7 +32,7 @@ def axe_adaptors(subsampled_fastqs):
     os.makedirs(output_path)
     get_seq_length_qual_scores(path_fastqs, subsampled_fastqs, num_sequences=200) #To create the subsampled_fastqs
     path_subsampled_fastqs = [os.path.join(subsampled_fastqs, f) for f in os.listdir(subsampled_fastqs) if f.endswith('fastq')]
-    best_adap, best_size = choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path, num_threads)
+    best_adap, best_size, _files = choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path, num_threads)
     print("Best adaptor:", best_adap)
     print("Best adaptor size:", best_size)
 
