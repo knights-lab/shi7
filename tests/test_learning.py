@@ -67,7 +67,7 @@ def trimmer(flash_output_filenames):
     print(filter_q, trim_q)
 
 class TestLearning(unittest.TestCase):
-    def test():
+    def test(self):
         subsample()
         subsampled_fastqs = os.path.join("testfq", "temp", "subsampled_fastqs")
 
