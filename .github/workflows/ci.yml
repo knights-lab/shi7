@@ -32,10 +32,10 @@ jobs:
         pip install flake8 nose
     
     - name: Install conda dependencies
-        shell: bash -l {0}
-        run: |
-          conda install -c bioconda trimmomatic
-          conda install -c bioconda flash
+      shell: bash -l {0}
+      run: |
+        conda install -c bioconda trimmomatic
+        conda install -c bioconda flash
         #    - name: Lint with flake8
         #run: |
         # stop the build if there are Python syntax errors or undefined names
