@@ -25,6 +25,7 @@ jobs:
       with:
         auto-update-conda: true
         python-version: 3.8
+        auto-activate-base: true
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -38,9 +39,10 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         #flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: nosetests
+      shell: bash -l {0}
       run: |
         # python setup.py test
-        conda activate base
+        conda info
         python setup.py install
         cd tests
         nosetests -v
