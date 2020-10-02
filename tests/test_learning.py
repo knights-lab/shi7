@@ -64,7 +64,7 @@ def flash(adapter_output_filenames):
         mean = 0
         return_vars.append([cv, mean])
 
-    print('CV =', cv, 'Mean =', cv_mean, 'Std Dev =' , cv_std)
+    print('CV =', cv, 'Mean =', mean)
 
     return sum(return_vars,[])
 
