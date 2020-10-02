@@ -13,7 +13,7 @@ from glob import glob
 import gzip
 from shi7 import __version__
 
-from shi7 import TRUE_FALSE_DICT, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, \
+from shi7.shi7 import TRUE_FALSE_DICT, read_fastq, axe_adaptors_single_end, axe_adaptors_paired_end, flash_part1, \
     flash_part2, split_fwd_rev, match_pairs, link_manicured_names
 
 def make_arg_parser():
