@@ -53,17 +53,16 @@ def flash(adapter_output_filenames):
     if is_stitchable:
         # TODO: flash_check_cv only returns a tuple of 2 but this is 
         # not currently reached so it doesn't matter
-        cv, cv_mean, cv_std = flash_check_cv(flash_output_path)
-        return_vars.append([cv, cv_mean, cv_std])
+        cv, mean = flash_check_cv(flash_output_path)
+        return_vars.append([cv, mean])
     # TODO: I added this because the variable assignment in the above is not
     # currently reached and so the test is failing. this probably needs to 
     # be investigated further because it seems like maybe the intention is that
     # is_stitchable should be true for this test data?
     else:
         cv = 0
-        cv_mean = 0
-        cv_std = 0
-        return_vars.append([cv, cv_mean, cv_std])
+        mean = 0
+        return_vars.append([cv, mean])
 
     print('CV =', cv, 'Mean =', cv_mean, 'Std Dev =' , cv_std)
 
