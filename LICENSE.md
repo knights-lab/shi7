@@ -1,3 +1,5 @@
+### Licenses for Flash, Trimmomatic are General Public License v3
+
 ### GNU AFFERO GENERAL PUBLIC LICENSE
 
 Version 3, 19 November 2007

@@ -1,0 +1,4 @@
+#!/bin/bash
+PARMS="$*"
+#PARMS=${PARMS//adapters/\"$(dirname "$0")\/\"adapters}
+java -jar $(dirname "$0")/trimmomatic.jar $PARMS
