@@ -1,6 +1,23 @@
 ![](https://github.com/knights-lab/shi7/workflows/build/badge.svg)
 
-# Prerequisites
+# New!
+Now the *shi7_trimmer binary* in bin/ is capable of standalone paired-end QC on a per-sample basis without any dependencies, prerequisites, or installation. 
+
+It has the following features:
+1. Native gzip support built in; just feed it fastq.gz file(s)
+2. Adaptor autodetection and trimming
+3. New automatic adapter support including poly-G repeats on newer Illumina 2-color instruments
+4. Detection and removal of any novel adapters or suspected technical sequence via PALINCUT mode (PE only)
+5. Support for stripping/anonymizing all headers (sanitizing)
+6. Support for outputting a set maximum depth (rarefaction) of QC'd reads
+7. Support for fasta as well as fastq output formats directly
+8. Support for discarding reads upon encountering an Illumina machine discard signal (an ultra-low QC code embedded in the read)
+9. A variety of base-pair quality trimming modes and windows, including FLOOR and blind cut as well as different rolling average varieties
+10. Support for different trimming quality thresholds at front and end of reads
+11. (Almost) all other features in python-wrapped shi7
+12. Over an order of magnitude faster in many cases, with no intermediates!
+
+# Prerequisites (classic shi7 and shi7_learning pipeline)
 1. Python 2.7+
 2. Java
 
