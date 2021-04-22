@@ -39,7 +39,10 @@ def subsample_fastqs(path_fastqs, num_files=10, num_sequences=1000):
 
 def limit_fastq(fastq_gen, num_sequences=1000):
     for i in range(num_sequences):
-        yield next(fastq_gen)
+        try:
+            yield next(fastq_gen)
+        except StopIteration:
+            return
 
 
 def get_seq_length_qual_scores(path_fastqs, output_path, num_files=10, num_sequences=1000):
@@ -120,7 +123,7 @@ def choose_axe_adaptors(path_subsampled_fastqs, paired_end, output_path, threads
     if best_size < 0.995*original_size:
         # Actually write the best files again for use in later steps
         logging.info("Best Adapters: {adapter}\tFile Size: {filesize}".format(adapter=best_adap, filesize=best_size))
-    
+
         if paired_end:
             files = axe_adaptors_paired_end(path_subsampled_fastqs, output_path, best_adap, threads, shell=False)
         else:
@@ -144,7 +147,7 @@ def flash_stitchable_and_check_outies(adapter_output_filenames, flash_output_pat
 
     path_flash_fqs = flash_part2(flash_output_str, flash_output_path)
     path_R1_fastqs, _ = split_fwd_rev(adapter_output_filenames)
-    
+
     matched_count = 0
     for original_fq, flash_fq in zip(path_R1_fastqs, path_flash_fqs):
         if count_num_lines(flash_fq) > count_num_lines(original_fq)*0.3:
@@ -247,7 +250,7 @@ def main():
 
     learning_params = ["shi7.py"]
     learning_pretty = ["SHI7 version", __version__]
-    
+
     input = os.path.abspath(args.input)
     output = os.path.abspath(args.output)
 
@@ -267,7 +270,7 @@ def main():
     else:
         os.makedirs(os.path.join(args.output, 'temp'))
 
-    
+
     path_fastqs = [os.path.join(input, f) for f in os.listdir(input) if f.endswith('fastq') or f.endswith('fq') or f.endswith('fq.gz') or f.endswith('fastq.gz')]
 
     if len(path_fastqs) == 0:
@@ -374,7 +377,7 @@ def main():
         cmd = " ".join(learning_params)
         output.write(cmd)
         print(cmd)
-    
+
     with open(os.path.join(args.output, "learning_params.txt"),"w") as output:
         for ix in range(0,len(learning_pretty),2):
             output.write(str(learning_pretty[ix]) + "\t" + str(learning_pretty[ix+1]) + "\n")
