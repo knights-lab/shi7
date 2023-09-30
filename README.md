@@ -32,7 +32,7 @@ source activate shi7
 ```
 
 ## Alternative portable/server install:
-Grab the latest [portable release]([https://github.com/knights-lab/shi7/releases](https://github.com/knights-lab/shi7/releases/tag/v1.0.1) package (not source), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
+Grab the latest [portable release](https://github.com/knights-lab/shi7/releases/tag/v1.0.1) package (not source), extract, then add to PATH. You should be able to execute shi7.py on the commandline. 
 
 Confused or new to UNIX? Or something not working right? Try following the super-specific directions below:
 
