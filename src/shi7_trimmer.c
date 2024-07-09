@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <zlib.h>
 #define SHOW_USAGE() {\
-	printf( "\nSHort-read Iterative Trimmer (SHI7) v0.92d, by Gabe. Usage:\n");\
+	printf( "\nSHort-read Iterative Trimmer (SHI7) v0.92f, by Gabe. Usage:\n");\
 	printf( "shi7_trimmer in_seqs.fastq out_prefix MINLEN QUAL <QUAL_RIGHT> ...\n");\
 	printf( "Choose one of the following optional trimming methods:\n");\
 	printf( "   [ROLLING X [PREROLL/POSTROLL]] For rolling average over X bases\n" );\
@@ -105,28 +105,29 @@ int main(int argc, char *argv[]) {
 		setvbuf(out2,0,_IOFBF,1<<20);
 	if (!in || !out || (pair && (!in2 || !out2))) {
 		puts("Can't open input or output file(s)!"); exit(1);}
-	char *Head = malloc(UINT16_MAX), *Seq = malloc(UINT16_MAX), 
-		*Shi7 = malloc(UINT16_MAX), *Qual = malloc(UINT16_MAX),
+	long maxLen = 16e6; // 16MB should be enough for anyone.
+	char *Head = malloc(maxLen), *Seq = malloc(maxLen), 
+		*Shi7 = malloc(maxLen), *Qual = malloc(maxLen),
 		*Head2 = 0, *Seq2 = 0, *Shi72 = 0, *Qual2 = 0; 
-	if (pair) Head2 = malloc(UINT16_MAX), Seq2 = malloc(UINT16_MAX),
-		Shi72 = malloc(UINT16_MAX), Qual2 = malloc(UINT16_MAX);
+	if (pair) Head2 = malloc(maxLen), Seq2 = malloc(maxLen),
+		Shi72 = malloc(maxLen), Qual2 = malloc(maxLen);
 	if (palincut && !pair) puts("WARNING: Can't do palincut on SE reads!");
 	long crap = 0, decency = 0, totI = 0, totJ = 0, totLen = 0, length=0, length2=LONG_MAX;
 	int *Scores = calloc(doRoll,sizeof(*Scores));
-	while (Head = gzgets(in,Head,UINT16_MAX)) { 
-		Seq = gzgets(in,Seq, UINT16_MAX);
-		Shi7 = gzgets(in,Shi7, UINT16_MAX);
-		Qual = gzgets(in,Qual, UINT16_MAX);
+	while (Head = gzgets(in,Head,maxLen)) { 
+		Seq = gzgets(in,Seq, maxLen);
+		Shi7 = gzgets(in,Shi7, maxLen);
+		Qual = gzgets(in,Qual, maxLen);
 		length = strlen(Qual);
 		//printf("Seq: %s qual: %s len %d\n",Seq,Qual,length);
 		if (Qual[length-1]=='\n') --length;
 		if (Qual[length-1]=='\r') --length;
 		//printf("--> Length is now %d\n",length);
 		if (pair) {
-			Head2 = gzgets(in2,Head2, UINT16_MAX);
-			Seq2 = gzgets(in2,Seq2, UINT16_MAX);
-			Shi72 = gzgets(in2,Shi72, UINT16_MAX);
-			Qual2 = gzgets(in2,Qual2, UINT16_MAX);
+			Head2 = gzgets(in2,Head2, maxLen);
+			Seq2 = gzgets(in2,Seq2, maxLen);
+			Shi72 = gzgets(in2,Shi72, maxLen);
+			Qual2 = gzgets(in2,Qual2, maxLen);
 			length2 = strlen(Qual2);
 			if (Qual2[length2-1]=='\n') --length2;
 			if (Qual2[length2-1]=='\r') --length2;
@@ -144,7 +145,7 @@ int main(int argc, char *argv[]) {
 				if (pair && doAdap2) {
 					adMin = adMin < endpt ? adMin : endpt; // truncate both reads where first adap found
 					// Truncate at partial matches up to 2 bases near the end
-					if (!r && !adap) // Only run on R1; second read is redundant due to equality
+					if (!r && !adap) // Only run on R1; second read is redundant due to assumed equality of length (!)
 						for (int w = *TLen - (AdapLens[z] < *TLen ? AdapLens[z] : 0) + 1; w < *TLen-1; ++w) {
 							if (!memcmp(Adaps[z],TSeq+w,*TLen - w) && !memcmp(Seq+w,Seq2+w,*TLen-w))
 								{adMin = adMin < w ? adMin : w; break;}
@@ -249,22 +250,21 @@ int main(int argc, char *argv[]) {
 		// Regurgitate the sequence(s). They're (prolly) OK enough if they made it this far down.
 		for (int z = L; z < R; z++) Seq[z] = Qual[z] - 33 > nify ? Seq[z] : 'N';
 		Seq[R]=0; Qual[R]='\n', Qual[R+1] = 0; 
-		//printf(" ------> seq [%d] R1 '%s', L = %d, R = %d, len %d\n",crap+decency,Seq,L,R, R-L);
-		if (fasta_out) Head[L]='>', Shi7[0]=0, Qual[L]=0;
+		if (fasta_out) Head[0]='>', Shi7[0]=0, Qual[L]=0;
 		if (strip) fprintf(out,"%c%d\n%s\n%s%s",fasta_out? '>':'@',crap+decency,
 			Seq + L,fasta_out? "":"+\n",Qual + L);
 		else fprintf(out,"%s%s\n%s%s",Head,Seq + L,Shi7,Qual + L);
 		if (pair) {
 			for (int z = L2; z < R2; z++) Seq2[z] = Qual2[z] - 33 > nify ? Seq2[z] : 'N';
 			Seq2[R2]=0; Qual2[R2]='\n'; Qual2[R2+1]=0;
-			if (fasta_out) Head2[L2]='>', Shi72[0]=0, Qual2[L2]=0;
+			if (fasta_out) Head2[0]='>', Shi72[0]=0, Qual2[L2]=0;
 			if (strip) fprintf(out2,"%c%d\n%s\n%s%s",fasta_out? '>':'@',crap+decency,
 				Seq2 + L2,fasta_out? "":"+\n",Qual2 + L2);
 			else fprintf(out2,"%s%s\n%s%s",Head2,Seq2 + L2,Shi72,Qual2 + L2);
 		}
 		++decency;
 		totLen += (R - L) + (R2 - L2);
-		totI += L+L2, totJ += (length - R) + (length2 - R2);
+		totI += L+L2, totJ += (length - R) + (pair ? (length2 - R2) : 0 );
 
 		HELL:NULL; // HEREIN LIE DEVILS
 		if (decency >= head) break;
